@@ -1,45 +1,51 @@
 /**
- * StellaServe Night Theme
- * A dark, premium palette for night-time food delivery
+ * StellaServe Light Theme
+ * Cream/Navy/Gold palette matching Figma prototype
  */
 
 export const Colors = {
-  // Primary palette — deep night sky
-  background: '#0B0F1A',
-  surface: '#131829',
-  surfaceLight: '#1C2237',
-  card: '#1A1F35',
-  cardHover: '#232845',
+  // Primary palette — light cream
+  background: '#FFFFFF',
+  surface: '#F5F5F0',
+  surfaceLight: '#F0EFEA',
+  card: '#FDF6E3',
+  cardHover: '#FAF0D6',
 
-  // Accent — warm amber/gold
-  primary: '#F5A623',
-  primaryLight: '#FFBE4F',
-  primaryDark: '#D4890E',
+  // Primary — dark navy
+  primary: '#1F1D2B',
+  primaryLight: '#2D2B3D',
+  primaryDark: '#151320',
+
+  // Accent — golden yellow
+  accent: '#EAB308',
+  accentLight: '#FDE68A',
+  accentDark: '#CA8A04',
 
   // Text
-  text: '#F0F0F5',
-  textSecondary: '#9CA3B8',
-  textMuted: '#5C6380',
+  text: '#1F1D2B',
+  textSecondary: '#6B7280',
+  textMuted: '#9CA3AF',
 
   // Status
-  success: '#34D399',
-  warning: '#FBBF24',
-  error: '#F87171',
-  info: '#60A5FA',
+  success: '#22C55E',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
 
   // Borders
-  border: '#2A2F45',
-  borderLight: '#3A4060',
+  border: '#E5E7EB',
+  borderLight: '#F3F4F6',
 
   // Tab bar
-  tabBar: '#0E1224',
-  tabActive: '#F5A623',
-  tabInactive: '#5C6380',
+  tabBar: '#FFFFFF',
+  tabActive: '#1F1D2B',
+  tabInactive: '#9CA3AF',
 
   // Misc
-  overlay: 'rgba(0, 0, 0, 0.6)',
-  star: '#F5A623',
-  skeleton: '#1C2237',
+  overlay: 'rgba(0, 0, 0, 0.4)',
+  star: '#EAB308',
+  skeleton: '#F3F4F6',
+  white: '#FFFFFF',
 };
 
 export const Spacing = {

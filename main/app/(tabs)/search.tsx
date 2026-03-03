@@ -2,24 +2,47 @@ import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 
-const CUISINES = ['All', 'Japanese', 'Thai', 'Italian', 'Chinese', 'Indian', 'Korean', 'Mexican'];
+const MOCK_RESULTS = [
+    { id: 'rest-001', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
+    { id: 'rest-002', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
+    { id: 'rest-003', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
+    { id: 'rest-004', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
+    { id: 'rest-005', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
+];
+
+function StarRating({ count = 5 }: { count?: number }) {
+    return (
+        <View style={{ flexDirection: 'row', gap: 2 }}>
+            {Array.from({ length: count }).map((_, i) => (
+                <Ionicons key={i} name="star" size={14} color={Colors.star} />
+            ))}
+        </View>
+    );
+}
 
 export default function SearchScreen() {
     const [query, setQuery] = useState('');
-    const [activeCuisine, setActiveCuisine] = useState('All');
     const router = useRouter();
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Text style={styles.backText}>◀ Back</Text>
+                </TouchableOpacity>
+            </View>
+
             {/* Search Input */}
             <View style={styles.searchContainer}>
                 <View style={styles.searchInput}>
-                    <Ionicons name="search" size={20} color={Colors.textMuted} />
+                    <Ionicons name="search-outline" size={18} color={Colors.textMuted} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Search restaurants, dishes..."
+                        placeholder="Search"
                         placeholderTextColor={Colors.textMuted}
                         value={query}
                         onChangeText={setQuery}
@@ -33,34 +56,47 @@ export default function SearchScreen() {
                 </View>
             </View>
 
-            {/* Cuisine Filters */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersRow}>
-                {CUISINES.map((cuisine) => (
+            {/* Sort / Filter Row */}
+            <View style={styles.filterRow}>
+                <TouchableOpacity style={styles.sortButton}>
+                    <Text style={styles.sortText}>Sort by</Text>
+                    <Ionicons name="chevron-down" size={16} color={Colors.text} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.filterButton}>
+                    <Ionicons name="options-outline" size={18} color={Colors.text} />
+                    <Text style={styles.filterText}>Filter</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Results */}
+            <ScrollView style={styles.results} showsVerticalScrollIndicator={false}>
+                {MOCK_RESULTS.map((item, index) => (
                     <TouchableOpacity
-                        key={cuisine}
-                        style={[styles.filterChip, activeCuisine === cuisine && styles.filterChipActive]}
-                        onPress={() => setActiveCuisine(cuisine)}
+                        key={item.id}
+                        style={styles.resultCard}
+                        activeOpacity={0.7}
+                        onPress={() => router.push(`/restaurant/${item.id}`)}
                     >
-                        <Text
-                            style={[styles.filterText, activeCuisine === cuisine && styles.filterTextActive]}
-                        >
-                            {cuisine}
-                        </Text>
+                        <View style={styles.resultImage}>
+                            <Ionicons name="restaurant-outline" size={24} color={Colors.textMuted} />
+                        </View>
+                        <View style={styles.resultInfo}>
+                            <Text style={styles.resultName}>{item.name}</Text>
+                            <View style={styles.resultMeta}>
+                                <Ionicons name="location-outline" size={13} color={Colors.primary} />
+                                <Text style={styles.resultAddress}>{item.address}</Text>
+                            </View>
+                            <View style={styles.resultMeta}>
+                                <Ionicons name="time-outline" size={13} color={Colors.textMuted} />
+                                <Text style={styles.resultTime}>{item.time} · {item.distance}</Text>
+                            </View>
+                            <StarRating count={item.rating} />
+                        </View>
                     </TouchableOpacity>
                 ))}
+                <View style={{ height: 32 }} />
             </ScrollView>
-
-            {/* Results Area */}
-            <ScrollView style={styles.results} showsVerticalScrollIndicator={false}>
-                <View style={styles.emptyState}>
-                    <Ionicons name="search-outline" size={64} color={Colors.textMuted} />
-                    <Text style={styles.emptyTitle}>Discover restaurants</Text>
-                    <Text style={styles.emptySubtitle}>
-                        Search by name, cuisine, or dish to find your midnight cravings
-                    </Text>
-                </View>
-            </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
@@ -69,73 +105,101 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
     },
+    header: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+    },
+    backText: {
+        fontSize: FontSize.md,
+        color: Colors.text,
+        fontWeight: '500',
+    },
     searchContainer: {
         paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.md,
     },
     searchInput: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: Colors.surfaceLight,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.full,
         paddingHorizontal: Spacing.md,
-        height: 48,
+        height: 44,
         gap: Spacing.sm,
-        borderWidth: 1,
-        borderColor: Colors.border,
     },
     input: {
         flex: 1,
         fontSize: FontSize.md,
         color: Colors.text,
     },
-    filtersRow: {
+    filterRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.md,
-        maxHeight: 52,
     },
-    filterChip: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        borderRadius: BorderRadius.full,
-        backgroundColor: Colors.surfaceLight,
-        marginRight: Spacing.sm,
-        borderWidth: 1,
-        borderColor: Colors.border,
+    sortButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
     },
-    filterChipActive: {
-        backgroundColor: Colors.primary,
-        borderColor: Colors.primary,
-    },
-    filterText: {
-        fontSize: FontSize.sm,
-        color: Colors.textSecondary,
+    sortText: {
+        fontSize: FontSize.md,
+        color: Colors.text,
         fontWeight: '500',
     },
-    filterTextActive: {
-        color: Colors.background,
-        fontWeight: '700',
+    filterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    filterText: {
+        fontSize: FontSize.md,
+        color: Colors.text,
+        fontWeight: '500',
     },
     results: {
         flex: 1,
         paddingHorizontal: Spacing.lg,
     },
-    emptyState: {
+    resultCard: {
+        flexDirection: 'row',
         alignItems: 'center',
+        paddingVertical: Spacing.md,
+        gap: Spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.borderLight,
+    },
+    resultImage: {
+        width: 72,
+        height: 72,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: Colors.card,
         justifyContent: 'center',
-        paddingTop: 80,
-        gap: Spacing.sm,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: Colors.border,
     },
-    emptyTitle: {
-        fontSize: FontSize.xl,
-        fontWeight: '600',
-        color: Colors.text,
-        marginTop: Spacing.md,
+    resultInfo: {
+        flex: 1,
+        gap: 3,
     },
-    emptySubtitle: {
+    resultName: {
         fontSize: FontSize.md,
+        fontWeight: '700',
+        color: Colors.text,
+    },
+    resultMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    resultAddress: {
+        fontSize: FontSize.xs,
+        color: Colors.textSecondary,
+    },
+    resultTime: {
+        fontSize: FontSize.xs,
         color: Colors.textMuted,
-        textAlign: 'center',
-        maxWidth: 260,
     },
 });
