@@ -1,14 +1,13 @@
 # 🌙 StellaServe
 
-A food delivery platform that focuses on **night-time** dining. Three-project monorepo.
+A food delivery platform that focuses on **night-time** dining.
 
 ## Architecture
 
 | Folder       | Technology            | Purpose                   |
 | ------------ | --------------------- | ------------------------- |
-| `main/`      | React Native (Expo)   | Mobile app for customers  |
+| `main/`      | React Native (Expo)   | Mobile app (user & restaurant) |
 | `backend/`   | Python (FastAPI)      | REST API backend          |
-| `frontend/`  | Next.js (TypeScript)  | POS / management dashboard|
 
 ## Getting Started
 
@@ -33,21 +32,10 @@ npm install
 npx expo start
 ```
 
-### 3. Dashboard (Next.js)
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Dashboard: http://localhost:3000
-
 ## Tech Stack
 
 - **Mobile**: React Native 0.81 + Expo 54 + Expo Router
 - **Backend**: FastAPI + Pydantic + SQLAlchemy
-- **Dashboard**: Next.js 15 + TypeScript + Vanilla CSS
 - **Theme**: Night-focused dark UI with amber/gold accents
 
 ## API Endpoints
