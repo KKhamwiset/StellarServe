@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from functools import wraps
+from jose import jwt, JWTError
 
 from app.config import get_settings
 from app.routers import auth, restaurants, menu, orders
@@ -23,12 +26,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
 # Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(restaurants.router, prefix="/api/restaurants", tags=["Restaurants"])
 app.include_router(menu.router, prefix="/api/menu", tags=["Menu"])
 app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
 
+@app.get("/", tags=["Health"])
+async def root():
+    """Root endpoint."""
+    return {"message": "Welcome to StellarServe API"}
 
 @app.get("/health", tags=["Health"])
 async def health_check():

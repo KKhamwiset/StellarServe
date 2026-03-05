@@ -4,9 +4,10 @@ pydantic
 pydantic-settings
 python-dotenv
 python-jose[cryptography]
-passlib[bcrypt]
+bcrypt==4.3.0
 python-multipart
 httpx
 sqlalchemy
 alembic
 psycopg2-binary
+pydantic[email]

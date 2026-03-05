@@ -8,7 +8,7 @@ export default function LandingScreen() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            router.replace('/(tabs)');
+            router.replace('/login');
         }, 2500);
 
         return () => clearTimeout(timer);

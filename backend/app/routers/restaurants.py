@@ -1,6 +1,5 @@
-from fastapi import APIRouter
 from app.schemas import RestaurantResponse
-
+from fastapi import APIRouter
 router = APIRouter()
 
 # Mock data for initial development

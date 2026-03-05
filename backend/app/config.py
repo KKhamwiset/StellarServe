@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # Server
-    host: str = "0.0.0.0"
+    host: str = "192.168.100.39"
     port: int = 8000
 
     # Database
