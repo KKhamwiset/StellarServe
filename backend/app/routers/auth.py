@@ -91,3 +91,8 @@ async def login(user_in: UserCreate, db: Session = Depends(get_db)):
 async def read_current_user(current_user: User = Depends(get_current_user)):
     """Get current authenticated user profile."""
     return current_user
+
+@router.post("/logout")
+async def logout(current_user: User = Depends(get_current_user)):
+    """Logout current user (client should discard token)."""
+    return {"message": "Logout successful"}

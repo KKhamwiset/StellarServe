@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
+import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
 
 const MENU_ITEMS = [
     { icon: 'location', label: 'Delivery Address', value: 'Set your address' },
@@ -14,6 +16,24 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfileScreen() {
+    const handleLogout = async () => {
+        try {
+            await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.logout}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            router.replace('/login');
+        } catch (err) {
+            console.error('Logout failed:', err);
+        }
+    };
+
+    const handleItemPress = (item: any) => {
+        if (item.label === 'Sign Out') {
+            handleLogout();
+        }
+    };
+
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             {/* Profile Header */}
@@ -55,6 +75,7 @@ export default function ProfileScreen() {
                         key={i}
                         style={[styles.menuItem, i === MENU_ITEMS.length - 1 && styles.menuItemLast]}
                         activeOpacity={0.7}
+                        onPress={() => handleItemPress(item)}
                     >
                         <View style={styles.menuLeft}>
                             <Ionicons
