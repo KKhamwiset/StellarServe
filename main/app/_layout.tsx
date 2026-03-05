@@ -18,13 +18,14 @@ const StellaServeLight = {
 };
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  initialRouteName: 'index',
 };
 
 export default function RootLayout() {
   return (
     <ThemeProvider value={StellaServeLight}>
       <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="restaurant/[id]"

@@ -1,7 +1,3 @@
-/**
- * Simplified theme color hook for StellaServe light theme
- */
-
 import { Colors } from '@/constants/theme';
 
 export function useThemeColor(

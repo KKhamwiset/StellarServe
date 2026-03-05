@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-
+import os
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -14,15 +14,15 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # Database
-    database_url: str = "sqlite:///./stellaserve.db"
+    database_url: str = os.getenv("DATABASE_URL")
 
     # JWT Auth
-    secret_key: str = "your-secret-key-change-in-production"
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    secret_key: str = os.getenv("SECRET_KEY")
+    algorithm: str = os.getenv("ALGORITHM")
+    access_token_expire_minutes: int = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:8081"
+    cors_origins: str = os.getenv("CORS_ORIGINS")
 
     @property
     def cors_origins_list(self) -> list[str]:

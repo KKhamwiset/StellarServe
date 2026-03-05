@@ -10,6 +10,7 @@ export const Colors = {
   surfaceLight: '#F0EFEA',
   card: '#FDF6E3',
   cardHover: '#FAF0D6',
+  yellow_background: '#fedc69',
 
   // Primary — dark navy
   primary: '#1F1D2B',
@@ -46,6 +47,10 @@ export const Colors = {
   star: '#EAB308',
   skeleton: '#F3F4F6',
   white: '#FFFFFF',
+
+  // Logo
+  yellow: '#fedc69',
+  purple: '#46149e',
 };
 
 export const Spacing = {
