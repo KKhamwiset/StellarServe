@@ -4,10 +4,15 @@ from datetime import datetime
 
 class UserBase(BaseModel):
     email: EmailStr
+    username: str
     full_name: Optional[str] = None
     phone: Optional[str] = None
 
 class UserCreate(UserBase):
+    password: str
+
+class UserLogin(BaseModel):
+    identifier: str
     password: str
 
 class UserResponse(UserBase):

@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from jose import jwt, JWTError
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, Token, TokenData
+from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, TokenData
 from app.security import verify_password, get_password_hash, create_access_token
 from app.config import get_settings
 
@@ -48,6 +49,13 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email already exists"
         )
+        
+    user_by_username = db.query(User).filter(User.username == user_in.username).first()
+    if user_by_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A user with this username already exists"
+        )
     
     if user_in.phone:
         user_phone = db.query(User).filter(User.phone == user_in.phone).first()
@@ -60,6 +68,7 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
     hashed_password = get_password_hash(user_in.password)
     new_user = User(
         email=user_in.email,
+        username=user_in.username,
         hashed_password=hashed_password,
         full_name=user_in.full_name,
         phone=user_in.phone,
@@ -73,13 +82,19 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-async def login(user_in: UserCreate, db: Session = Depends(get_db)):
-    """Login and get access token."""
-    user = db.query(User).filter(User.email == user_in.email).first()
+async def login(user_in: UserLogin, db: Session = Depends(get_db)):
+    """Login and get access token using email or username."""
+    user = db.query(User).filter(
+        or_(
+            User.email == user_in.identifier,
+            User.username == user_in.identifier
+        )
+    ).first()
+    
     if not user or not verify_password(user_in.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect email, username, or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

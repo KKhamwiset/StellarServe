@@ -17,7 +17,7 @@ import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
 import { styles } from '@/styles/login.styles';
 
 export default function LoginScreen() {
-    const [email, setEmail] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +33,7 @@ export default function LoginScreen() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ identifier, password }),
             });
 
             const data = await response.json();
@@ -75,16 +75,15 @@ export default function LoginScreen() {
 
                     <View style={styles.form}>
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Email Address</Text>
+                            <Text style={styles.label}>Username or Email</Text>
                             <View style={styles.inputWrapper}>
-                                <Ionicons name="mail-outline" size={20} color={Colors.textMuted} style={styles.inputIcon} />
+                                <Ionicons name="person-outline" size={20} color={Colors.textMuted} style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="name@example.com"
+                                    placeholder="johndoe123 or name@example.com"
                                     placeholderTextColor={Colors.textMuted}
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    keyboardType="email-address"
+                                    value={identifier}
+                                    onChangeText={setIdentifier}
                                     autoCapitalize="none"
                                 />
                             </View>

@@ -46,7 +46,9 @@ export default function RestaurantDetailScreen() {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{restaurant.name}</Text>
                 <TouchableOpacity>
-                    <Ionicons name="cart-outline" size={24} color={Colors.primary} />
+                    <Ionicons
+                        name="cart-outline" size={24} color={Colors.primary}
+                        onPress={() => { router.push("/cart") }} />
                 </TouchableOpacity>
             </View>
 

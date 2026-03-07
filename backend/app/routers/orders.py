@@ -1,82 +1,145 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 import uuid
+from typing import List
 
-from app.schemas import OrderCreate, OrderResponse, OrderItemResponse
+from app.database import get_db
+from app.models.user import User
+from app.models.cart import Cart, CartItem
+from app.models.order import Order, OrderItem
+from app.models.restaurant import Restaurant, MenuItem
+from app.schemas.order import OrderCreate, OrderResponse, OrderItemResponse
+from .auth import get_current_user
 
 router = APIRouter()
 
-# In-memory storage for orders (will be replaced by database)
-orders_store: list[dict] = []
 
-# Map of menu item IDs to their details (for order response)
-MENU_ITEM_LOOKUP = {
-    "item-001": {"name": "Tonkotsu Ramen", "price": 280.0},
-    "item-002": {"name": "Miso Ramen", "price": 260.0},
-    "item-003": {"name": "Gyoza (6 pcs)", "price": 120.0},
-    "item-004": {"name": "Pad Thai", "price": 180.0},
-    "item-005": {"name": "Green Curry", "price": 220.0},
-    "item-006": {"name": "Mango Sticky Rice", "price": 140.0},
-    "item-007": {"name": "Margherita Pizza", "price": 320.0},
-    "item-008": {"name": "Pepperoni Pizza", "price": 350.0},
-}
+@router.post("/checkout", response_model=OrderResponse)
+async def create_order_from_cart(
+    order_in: OrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new order from current cart (Checkout)."""
+    cart = db.query(Cart).filter(Cart.user_id == current_user.id).first()
+    
+    if not cart or not cart.items:
+        raise HTTPException(status_code=400, detail="Cart is empty")
 
-RESTAURANT_NAMES = {
-    "rest-001": "Midnight Ramen House",
-    "rest-002": "Moonlight Thai Kitchen",
-    "rest-003": "Starlight Pizza",
-}
+    if cart.restaurant_id != order_in.restaurant_id:
+        raise HTTPException(status_code=400, detail="Cart items do not belong to the specified restaurant")
 
-
-@router.post("/", response_model=OrderResponse)
-async def create_order(order: OrderCreate):
-    """Create a new order."""
     order_id = f"ord-{uuid.uuid4().hex[:8]}"
-
-    # Build order items with details
-    items = []
-    total = 0.0
-    for item in order.items:
-        menu_info = MENU_ITEM_LOOKUP.get(item.menu_item_id, {"name": "Unknown", "price": 0})
-        subtotal = menu_info["price"] * item.quantity
-        total += subtotal
-        items.append(
-            OrderItemResponse(
-                menu_item_id=item.menu_item_id,
-                name=menu_info["name"],
-                quantity=item.quantity,
-                price=menu_info["price"],
-                subtotal=subtotal,
-            )
+    
+    # Calculate total and prepare items using DB models
+    total_price = 0.0
+    new_order_items = []
+    
+    for cart_item in cart.items:
+        menu_item = db.query(MenuItem).filter(MenuItem.id == cart_item.menu_item_id).first()
+        if not menu_item:
+            raise HTTPException(status_code=404, detail=f"Menu item {cart_item.menu_item_id} not found")
+            
+        subtotal = menu_item.price * cart_item.quantity
+        total_price += subtotal
+        
+        order_item = OrderItem(
+            order_id=order_id,
+            menu_item_id=menu_item.id,
+            quantity=cart_item.quantity,
+            price_at_purchase=menu_item.price
         )
+        new_order_items.append(order_item)
 
-    order_data = OrderResponse(
+    # Create the main order
+    new_order = Order(
         id=order_id,
-        restaurant_id=order.restaurant_id,
-        restaurant_name=RESTAURANT_NAMES.get(order.restaurant_id, "Unknown Restaurant"),
-        items=items,
-        total=total,
+        user_id=current_user.id,
+        restaurant_id=cart.restaurant_id,
+        total_price=total_price,
         status="pending",
-        delivery_address=order.delivery_address,
-        phone=order.phone,
-        notes=order.notes,
-        created_at=datetime.now(timezone.utc),
     )
 
-    orders_store.append(order_data.model_dump())
-    return order_data
+    db.add(new_order)
+    db.add_all(new_order_items)
+    
+    # Clear the cart
+    db.query(CartItem).filter(CartItem.cart_id == cart.id).delete()
+    cart.restaurant_id = None
+    
+    db.commit()
+    db.refresh(new_order)
+    
+    return _build_order_response(new_order, order_in, db)
 
 
-@router.get("/", response_model=list[OrderResponse])
-async def list_orders():
-    """List all orders."""
-    return orders_store
+@router.get("/", response_model=List[OrderResponse])
+async def list_orders(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List all orders for current user."""
+    orders = db.query(Order).filter(Order.user_id == current_user.id).all()
+    
+    response_list = []
+    for order in orders:
+        response_list.append(_build_order_response(order, None, db))
+        
+    return response_list
 
 
-@router.get("/{order_id}", response_model=OrderResponse | dict)
-async def get_order(order_id: str):
+@router.get("/{order_id}", response_model=OrderResponse)
+async def get_order(
+    order_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """Get a specific order by ID."""
-    for order in orders_store:
-        if order["id"] == order_id:
-            return order
-    return {"error": "Order not found"}
+    order = db.query(Order).filter(Order.id == order_id).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    if order.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this order")
+        
+    return _build_order_response(order, None, db)
+
+
+def _build_order_response(order: Order, order_in: OrderCreate, db: Session) -> OrderResponse:
+    """Helper to populate nested OrderResponse."""
+    restaurant = db.query(Restaurant).filter(Restaurant.id == order.restaurant_id).first()
+    restaurant_name = restaurant.name if restaurant else "Unknown Restaurant"
+    
+    items_response = []
+    for item in order.items:
+        menu_item = db.query(MenuItem).filter(MenuItem.id == item.menu_item_id).first()
+        items_response.append(
+            OrderItemResponse(
+                menu_item_id=item.menu_item_id,
+                name=menu_item.name if menu_item else "Unknown",
+                quantity=item.quantity,
+                price=item.price_at_purchase,
+                subtotal=item.price_at_purchase * item.quantity
+            )
+        )
+        
+    # Since delivery info isn't on the Order model yet, if it was just passed in we use that,
+    # otherwise we use an empty string for now or fetch from user profile eventually
+    delivery_address = order_in.delivery_address if order_in else ""
+    phone = order_in.phone if order_in else ""
+    notes = order_in.notes if order_in else ""
+
+    return OrderResponse(
+        id=order.id,
+        restaurant_id=order.restaurant_id,
+        restaurant_name=restaurant_name,
+        delivery_address=delivery_address,
+        phone=phone,
+        notes=notes,
+        status=order.status,
+        total=order.total_price,
+        items=items_response,
+        created_at=order.created_at
+    )

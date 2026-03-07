@@ -19,6 +19,7 @@ import { styles } from '@/styles/register.styles';
 
 export default function RegisterScreen() {
     const [fullName, setFullName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
@@ -38,6 +39,7 @@ export default function RegisterScreen() {
 
         const payload = {
             full_name: fullName,
+            username: username,
             email: email,
             phone: phone,
             password: password,
@@ -105,6 +107,21 @@ export default function RegisterScreen() {
                                     placeholderTextColor={Colors.textMuted}
                                     value={fullName}
                                     onChangeText={setFullName}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Username</Text>
+                            <View style={styles.inputWrapper}>
+                                <Ionicons name="at-outline" size={20} color={Colors.textMuted} style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="johndoe123"
+                                    placeholderTextColor={Colors.textMuted}
+                                    value={username}
+                                    onChangeText={setUsername}
+                                    autoCapitalize="none"
                                 />
                             </View>
                         </View>
