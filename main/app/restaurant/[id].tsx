@@ -1,26 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-
-const RESTAURANTS: Record<string, any> = {
-    'rest-001': { name: 'Midnight Ramen House' },
-    'rest-002': { name: 'Moonlight Thai Kitchen' },
-    'rest-003': { name: 'Starlight Pizza' },
-    'rest-004': { name: 'Restaurant' },
-};
-
-const MENU_ITEMS = [
-    { id: 'm-1', name: 'Menu Name', price: 'xxx', rating: 5 },
-    { id: 'm-2', name: 'Menu Name', price: 'xxx', rating: 5 },
-    { id: 'm-3', name: 'Menu Name', price: 'xxx', rating: 5 },
-    { id: 'm-4', name: 'Menu Name', price: 'xxx', rating: 5 },
-    { id: 'm-5', name: 'Menu Name', price: 'xxx', rating: 5 },
-    { id: 'm-6', name: 'Menu Name', price: 'xxx', rating: 5 },
-    { id: 'm-7', name: 'Menu Name', price: 'xxx', rating: 5 },
-    { id: 'm-8', name: 'Menu Name', price: 'xxx', rating: 5 },
-];
+import { getMenu, addToCart, MenuItem, getRestaurant, Restaurant } from '@/services/api';
 
 function StarRating({ count = 5 }: { count?: number }) {
     return (
@@ -35,7 +19,53 @@ function StarRating({ count = 5 }: { count?: number }) {
 export default function RestaurantDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const restaurant = RESTAURANTS[id] || { name: 'Restaurant Name' };
+
+    const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAdding, setIsAdding] = useState(false);
+
+    useEffect(() => {
+        loadData();
+    }, [id]);
+
+    const loadData = async () => {
+        try {
+            const [restData, menuData] = await Promise.all([
+                getRestaurant(id),
+                getMenu(id)
+            ]);
+            setRestaurant(restData);
+            setMenuItems(menuData);
+        } catch (error) {
+            console.error('Failed to load restaurant data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAddToCart = async (menuItemId: string, restaurant_id: string) => {
+        if (isAdding) return;
+        console.log("Addding item id : " + menuItemId + " rest_id : " + restaurant_id)
+        setIsAdding(true);
+        try {
+            await addToCart(menuItemId, 1, restaurant_id);
+            Alert.alert("Success", "Added to cart!");
+        } catch (error) {
+            console.error('Failed to add to cart:', error);
+            Alert.alert("Error", "Could not add to cart");
+        } finally {
+            setIsAdding(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -44,7 +74,7 @@ export default function RestaurantDetailScreen() {
                 <TouchableOpacity onPress={() => router.back()}>
                     <Text style={styles.backText}>◀ Back</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{restaurant.name}</Text>
+                <Text style={styles.headerTitle}>{restaurant?.name || 'Restaurant'}</Text>
                 <TouchableOpacity>
                     <Ionicons
                         name="cart-outline" size={24} color={Colors.primary}
@@ -54,18 +84,22 @@ export default function RestaurantDetailScreen() {
 
             {/* Menu List */}
             <ScrollView showsVerticalScrollIndicator={false}>
-                {MENU_ITEMS.map((item) => (
+                {menuItems.map((item) => (
                     <View key={item.id} style={styles.menuCard}>
                         <View style={styles.menuImage}>
-                            <Ionicons name="fast-food-outline" size={28} color={Colors.textMuted} />
+                            {item.image_url ? (
+                                <Image source={{ uri: item.image_url }} style={{ width: '100%', height: '100%', borderRadius: BorderRadius.lg }} />
+                            ) : (
+                                <Ionicons name="fast-food-outline" size={28} color={Colors.textMuted} />
+                            )}
                         </View>
                         <View style={styles.menuInfo}>
-                            <StarRating count={item.rating} />
+                            <StarRating count={5} />
                             <Text style={styles.menuName}>{item.name}</Text>
                             <Text style={styles.menuPrice}>Price : {item.price} Baht</Text>
                         </View>
                         <View style={styles.menuActions}>
-                            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.7}>
+                            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.7} onPress={() => handleAddToCart(item.id, id)}>
                                 <Text style={styles.addToCartText}>Add to cart</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.orderNowBtn} activeOpacity={0.7}>

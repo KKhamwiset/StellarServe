@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime
+from sqlalchemy import Column, String, Boolean, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -23,7 +23,6 @@ class Restaurant(Base):
 
     # Relationships
     menu_items = relationship("MenuItem", back_populates="restaurant")
-    carts = relationship("Cart", back_populates="restaurant")
 
 
 class MenuItem(Base):

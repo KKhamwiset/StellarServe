@@ -27,8 +27,10 @@ async def create_order_from_cart(
     if not cart or not cart.items:
         raise HTTPException(status_code=400, detail="Cart is empty")
 
-    if cart.restaurant_id != order_in.restaurant_id:
-        raise HTTPException(status_code=400, detail="Cart items do not belong to the specified restaurant")
+    cart_items_for_restaurant = [item for item in cart.items if item.restaurant_id == order_in.restaurant_id]
+    
+    if not cart_items_for_restaurant:
+        raise HTTPException(status_code=400, detail="No cart items found for the specified restaurant")
 
     order_id = f"ord-{uuid.uuid4().hex[:8]}"
     
@@ -36,7 +38,7 @@ async def create_order_from_cart(
     total_price = 0.0
     new_order_items = []
     
-    for cart_item in cart.items:
+    for cart_item in cart_items_for_restaurant:
         menu_item = db.query(MenuItem).filter(MenuItem.id == cart_item.menu_item_id).first()
         if not menu_item:
             raise HTTPException(status_code=404, detail=f"Menu item {cart_item.menu_item_id} not found")
@@ -56,7 +58,7 @@ async def create_order_from_cart(
     new_order = Order(
         id=order_id,
         user_id=current_user.id,
-        restaurant_id=cart.restaurant_id,
+        restaurant_id=order_in.restaurant_id,
         total_price=total_price,
         status="pending",
     )
@@ -64,9 +66,11 @@ async def create_order_from_cart(
     db.add(new_order)
     db.add_all(new_order_items)
     
-    # Clear the cart
-    db.query(CartItem).filter(CartItem.cart_id == cart.id).delete()
-    cart.restaurant_id = None
+    # Clear the cart items for the specific restaurant
+    db.query(CartItem).filter(
+        CartItem.cart_id == cart.id,
+        CartItem.restaurant_id == order_in.restaurant_id
+    ).delete()
     
     db.commit()
     db.refresh(new_order)

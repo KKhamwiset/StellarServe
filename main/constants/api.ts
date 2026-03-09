@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     health: '/health',
     restaurants: '/api/restaurants',
     menu: (restaurantId: string) => `/api/menu/${restaurantId}`,
+    cart: '/api/cart',
     orders: '/api/orders',
     auth: {
         login: '/api/auth/login',

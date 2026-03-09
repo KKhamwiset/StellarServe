@@ -44,18 +44,9 @@ async def add_item_to_cart(
 
     cart = db.query(Cart).filter(Cart.user_id == current_user.id).first()
     if not cart:
-        cart = Cart(user_id=current_user.id, restaurant_id=menu_item.restaurant_id)
+        cart = Cart(user_id=current_user.id)
         db.add(cart)
         db.flush()
-    else:
-        if cart.restaurant_id and cart.restaurant_id != menu_item.restaurant_id:
-            # Clear cart if changing restaurants
-            db.query(CartItem).filter(CartItem.cart_id == cart.id).delete()
-            cart.restaurant_id = menu_item.restaurant_id
-            db.flush()
-        elif not cart.restaurant_id:
-            cart.restaurant_id = menu_item.restaurant_id
-            db.flush()
 
     # Check if item already exists in cart
     cart_item = (
@@ -68,7 +59,7 @@ async def add_item_to_cart(
         cart_item.quantity += item_in.quantity
     else:
         cart_item = CartItem(
-            cart_id=cart.id, menu_item_id=menu_item.id, quantity=item_in.quantity
+            cart_id=cart.id, menu_item_id=menu_item.id, quantity=item_in.quantity, restaurant_id=item_in.restaurant_id
         )
         db.add(cart_item)
 
@@ -96,12 +87,6 @@ async def remove_item_from_cart(
     db.commit()
     db.refresh(cart)
 
-    # Optional: if cart is empty, unset restaurant_id
-    if not cart.items:
-        cart.restaurant_id = None
-        db.commit()
-        db.refresh(cart)
-
     return _build_cart_response(cart, db)
 
 
@@ -113,7 +98,6 @@ async def clear_cart(
     cart = db.query(Cart).filter(Cart.user_id == current_user.id).first()
     if cart:
         db.query(CartItem).filter(CartItem.cart_id == cart.id).delete()
-        cart.restaurant_id = None
         db.commit()
     return
 
@@ -134,6 +118,7 @@ def _build_cart_response(cart: Cart, db: Session) -> CartResponse:
                     id=item.id,
                     menu_item_id=item.menu_item_id,
                     quantity=item.quantity,
+                    restaurant_id=item.restaurant_id,
                     name=menu_item.name,
                     price=menu_item.price,
                     subtotal=subtotal,
@@ -143,7 +128,6 @@ def _build_cart_response(cart: Cart, db: Session) -> CartResponse:
     return CartResponse(
         id=cart.id,
         user_id=cart.user_id,
-        restaurant_id=cart.restaurant_id,
         items=items,
         total_price=total_price,
     )

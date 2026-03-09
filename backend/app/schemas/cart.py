@@ -5,6 +5,7 @@ from datetime import datetime
 class CartItemBase(BaseModel):
     menu_item_id: str
     quantity: int
+    restaurant_id: str
 
 class CartItemCreate(CartItemBase):
     pass
@@ -19,7 +20,7 @@ class CartItemResponse(CartItemBase):
         from_attributes = True
 
 class CartBase(BaseModel):
-    restaurant_id: Optional[str] = None
+    pass
 
 class CartResponse(CartBase):
     id: int

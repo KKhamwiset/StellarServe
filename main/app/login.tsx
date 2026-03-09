@@ -11,6 +11,7 @@ import {
     Image,
 } from 'react-native';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
@@ -39,6 +40,7 @@ export default function LoginScreen() {
             const data = await response.json();
 
             if (response.ok) {
+                await AsyncStorage.setItem('userToken', data.access_token);
                 router.replace('/(tabs)');
             } else {
                 setError(data.detail || "Login failed");

@@ -2,6 +2,7 @@
  * API client for StellaServe backend
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
 
 interface RequestOptions {
@@ -20,6 +21,14 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
             ...headers,
         },
     };
+
+    const token = await AsyncStorage.getItem('userToken');
+    if (token) {
+        config.headers = {
+            ...config.headers,
+            'Authorization': `Bearer ${token}`
+        };
+    }
 
     if (body) {
         config.body = JSON.stringify(body);
@@ -71,6 +80,42 @@ export interface MenuItem {
 
 export async function getMenu(restaurantId: string): Promise<MenuItem[]> {
     return request<MenuItem[]>(API_ENDPOINTS.menu(restaurantId));
+}
+
+// ─── Cart API ───────────────────────────────────────────
+export interface CartItem {
+    id: number;
+    menu_item_id: string;
+    quantity: number;
+    name: string;
+    price: number;
+    subtotal: number;
+    restaurant_id: string;
+}
+
+export interface Cart {
+    id: number;
+    user_id: number;
+    restaurant_id: string | null;
+    items: CartItem[];
+    total_price: number;
+}
+
+export async function getCart(): Promise<Cart> {
+    return request<Cart>(API_ENDPOINTS.cart);
+}
+
+export async function addToCart(menu_item_id: string, quantity: number, restaurant_id: string): Promise<Cart> {
+    return request<Cart>(`${API_ENDPOINTS.cart}/items`, {
+        method: 'POST',
+        body: { menu_item_id, quantity, restaurant_id },
+    });
+}
+
+export async function removeFromCart(item_id: number): Promise<Cart> {
+    return request<Cart>(`${API_ENDPOINTS.cart}/items/${item_id}`, {
+        method: 'DELETE',
+    });
 }
 
 // ─── Orders API ─────────────────────────────────────────

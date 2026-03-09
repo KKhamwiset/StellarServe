@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,60 +8,88 @@ import {
     Image,
     SafeAreaView,
     Platform,
+    ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-
-// --- MOCK DATA ---
-const MOCK_CART_ITEMS = [
-    {
-        id: '1',
-        name: 'Stellar Burger',
-        restaurant: 'Stellar Grill',
-        price: 280,
-        quantity: 2,
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=200&auto=format&fit=crop',
-        options: 'Medium Rare, No Onions'
-    },
-    {
-        id: '2',
-        name: 'Truffle Fries',
-        restaurant: 'Stellar Grill',
-        price: 150,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1534080564583-6be75777b70a?q=80&w=200&auto=format&fit=crop',
-        options: 'Extra Truffle Mayo'
-    },
-    {
-        id: '3',
-        name: 'Midnight Shake',
-        restaurant: 'Sweet Dreams',
-        price: 120,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1572490122747-3968b75bb8fc?q=80&w=200&auto=format&fit=crop',
-        options: 'Chocolate'
-    }
-];
+import { getCart, addToCart, removeFromCart, createOrder, Cart } from '@/services/api';
 
 export default function CartScreen() {
-    const [cartItems, setCartItems] = useState(MOCK_CART_ITEMS);
+    const [cart, setCart] = useState<Cart | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const updateQuantity = (id: string, delta: number) => {
-        setCartItems(prev =>
-            prev.map(item => {
-                if (item.id === id) {
-                    const newQuantity = Math.max(0, item.quantity + delta);
-                    return { ...item, quantity: newQuantity };
-                }
-                return item;
-            }).filter(item => item.quantity > 0)
-        );
+    useEffect(() => {
+        loadCart();
+    }, []);
+
+    const loadCart = async () => {
+        try {
+            const data = await getCart();
+            setCart(data);
+        } catch (error) {
+            console.error('Failed to load cart:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const deliveryFee = subtotal > 0 ? 50 : 0;
-    const total = subtotal + deliveryFee;
+    const updateQuantity = async (id: number, currentQty: number, delta: number) => {
+        const item = cart?.items.find(i => i.id === id);
+        if (!item) return;
+
+        try {
+            if (currentQty + delta <= 0) {
+                const newData = await removeFromCart(id);
+                setCart(newData);
+            } else {
+                const newData = await addToCart(item.menu_item_id, delta, item.restaurant_id);
+                setCart(newData);
+            }
+        } catch (error) {
+            console.error('Failed to update quantity:', error);
+        }
+    };
+
+    const handleCheckout = async (restaurantId: string) => {
+        if (!cart || cart.items.length === 0) return;
+
+        const itemsToCheckout = cart.items.filter(i => i.restaurant_id === restaurantId);
+        if (itemsToCheckout.length === 0) return;
+
+        try {
+            await createOrder({
+                restaurant_id: restaurantId,
+                items: itemsToCheckout.map(item => ({
+                    menu_item_id: item.menu_item_id,
+                    quantity: item.quantity
+                })),
+                delivery_address: 'Default Address',
+                phone: '0000000000'
+            });
+            await loadCart();
+        } catch (error) {
+            console.error('Checkout failed:', error);
+        }
+    };
+
+    const cartItems = cart?.items || [];
+
+    const groupedItems = cartItems.reduce((acc, item) => {
+        if (!acc[item.restaurant_id]) {
+            acc[item.restaurant_id] = [];
+        }
+        acc[item.restaurant_id].push(item);
+        return acc;
+    }, {} as Record<string, typeof cartItems>);
+
+    if (isLoading) {
+        return (
+            <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -89,66 +117,66 @@ export default function CartScreen() {
                 ) : (
                     <>
                         <View style={styles.itemList}>
-                            {cartItems.map((item) => (
-                                <View key={item.id} style={styles.cartItem}>
-                                    <Image source={{ uri: item.image }} style={styles.itemImage} />
-                                    <View style={styles.itemDetails}>
-                                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={styles.itemRestaurant} numberOfLines={1}>{item.restaurant}</Text>
-                                        {item.options && (
-                                            <Text style={styles.itemOptions} numberOfLines={1}>{item.options}</Text>
-                                        )}
-                                        <Text style={styles.itemPrice}>฿{item.price}</Text>
-                                    </View>
-                                    <View style={styles.quantityControl}>
-                                        <TouchableOpacity
-                                            style={styles.quantityButton}
-                                            onPress={() => updateQuantity(item.id, -1)}
-                                        >
-                                            <Ionicons name="remove" size={16} color={Colors.primary} />
-                                        </TouchableOpacity>
-                                        <Text style={styles.quantityText}>{item.quantity}</Text>
-                                        <TouchableOpacity
-                                            style={styles.quantityButton}
-                                            onPress={() => updateQuantity(item.id, 1)}
-                                        >
-                                            <Ionicons name="add" size={16} color={Colors.primary} />
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            ))}
-                        </View>
+                            {Object.entries(groupedItems).map(([restaurantId, items]) => {
+                                const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                                const deliveryFee = 50;
+                                const total = subtotal + deliveryFee;
 
-                        <View style={styles.summarySection}>
-                            <Text style={styles.summaryTitle}>Order Summary</Text>
-                            <View style={styles.summaryRow}>
-                                <Text style={styles.summaryLabel}>Subtotal</Text>
-                                <Text style={styles.summaryValue}>฿{subtotal}</Text>
-                            </View>
-                            <View style={styles.summaryRow}>
-                                <Text style={styles.summaryLabel}>Delivery Fee</Text>
-                                <Text style={styles.summaryValue}>฿{deliveryFee}</Text>
-                            </View>
-                            <View style={[styles.summaryRow, styles.totalRow]}>
-                                <Text style={styles.totalLabel}>Total</Text>
-                                <Text style={styles.totalValue}>฿{total}</Text>
-                            </View>
+                                return (
+                                    <View key={restaurantId} style={styles.restaurantGroup}>
+                                        <Text style={styles.groupHeader}>Order from {restaurantId}</Text>
+                                        {items.map((item) => (
+                                            <View key={item.id} style={styles.cartItem}>
+                                                <Image source={{ uri: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=200&auto=format&fit=crop' }} style={styles.itemImage} />
+                                                <View style={styles.itemDetails}>
+                                                    <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                                                    <Text style={styles.itemPrice}>฿{item.price}</Text>
+                                                </View>
+                                                <View style={styles.quantityControl}>
+                                                    <TouchableOpacity
+                                                        style={styles.quantityButton}
+                                                        onPress={() => updateQuantity(item.id, item.quantity, -1)}
+                                                    >
+                                                        <Ionicons name="remove" size={16} color={Colors.primary} />
+                                                    </TouchableOpacity>
+                                                    <Text style={styles.quantityText}>{item.quantity}</Text>
+                                                    <TouchableOpacity
+                                                        style={styles.quantityButton}
+                                                        onPress={() => updateQuantity(item.id, item.quantity, 1)}
+                                                    >
+                                                        <Ionicons name="add" size={16} color={Colors.primary} />
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        ))}
+
+                                        <View style={styles.summarySection}>
+                                            <View style={styles.summaryRow}>
+                                                <Text style={styles.summaryLabel}>Subtotal</Text>
+                                                <Text style={styles.summaryValue}>฿{subtotal}</Text>
+                                            </View>
+                                            <View style={styles.summaryRow}>
+                                                <Text style={styles.summaryLabel}>Delivery Fee</Text>
+                                                <Text style={styles.summaryValue}>฿{deliveryFee}</Text>
+                                            </View>
+                                            <View style={[styles.summaryRow, styles.totalRow]}>
+                                                <Text style={styles.totalLabel}>Total</Text>
+                                                <Text style={styles.totalValue}>฿{total}</Text>
+                                            </View>
+                                            <TouchableOpacity style={[styles.checkoutButton, { marginTop: Spacing.md }]} activeOpacity={0.8} onPress={() => handleCheckout(restaurantId)}>
+                                                <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+                                                <View style={styles.checkoutPriceTag}>
+                                                    <Text style={styles.checkoutPriceText}>฿{total}</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                );
+                            })}
                         </View>
                     </>
                 )}
             </ScrollView>
-
-            {/* Sticky Checkout Footer */}
-            {cartItems.length > 0 && (
-                <View style={styles.footer}>
-                    <TouchableOpacity style={styles.checkoutButton} activeOpacity={0.8}>
-                        <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-                        <View style={styles.checkoutPriceTag}>
-                            <Text style={styles.checkoutPriceText}>฿{total}</Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-            )}
         </SafeAreaView>
     );
 }
@@ -210,6 +238,19 @@ const styles = StyleSheet.create({
     },
     itemList: {
         padding: Spacing.md,
+    },
+    restaurantGroup: {
+        marginBottom: Spacing.xl,
+        backgroundColor: Colors.surface,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.md,
+    },
+    groupHeader: {
+        fontSize: FontSize.lg,
+        fontWeight: 'bold',
+        color: Colors.primary,
+        marginBottom: Spacing.md,
+        paddingHorizontal: Spacing.xs,
     },
     cartItem: {
         flexDirection: 'row',
