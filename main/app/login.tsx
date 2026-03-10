@@ -38,8 +38,8 @@ export default function LoginScreen() {
             });
 
             const data = await response.json();
-
             if (response.ok) {
+                await AsyncStorage.setItem('user', JSON.stringify(data.user));
                 await AsyncStorage.setItem('userToken', data.access_token);
                 router.replace('/(tabs)');
             } else {
@@ -47,6 +47,7 @@ export default function LoginScreen() {
             }
         } catch (err) {
             setError("Cannot connect to server. Please check your network.");
+            console.error(err);
         } finally {
             setIsLoading(false);
         }

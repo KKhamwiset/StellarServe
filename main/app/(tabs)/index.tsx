@@ -59,7 +59,7 @@ export default function HomeScreen() {
             <Ionicons name="location" size={20} color={Colors.primary} />
             <Text style={styles.locationText}>9 West 46 Th Street, New York City</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/cart')}>
             <Ionicons name="cart-outline" size={24} color={Colors.primary} />
           </TouchableOpacity>
         </View>

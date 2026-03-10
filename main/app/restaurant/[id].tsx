@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getMenu, addToCart, MenuItem, getRestaurant, Restaurant } from '@/services/api';
+import { getMenu, getCart, addToCart, removeFromCart, MenuItem, getRestaurant, Restaurant, Cart } from '@/services/api';
 
 function StarRating({ count = 5 }: { count?: number }) {
     return (
@@ -23,7 +23,8 @@ export default function RestaurantDetailScreen() {
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isAdding, setIsAdding] = useState(false);
+    const [cart, setCart] = useState<Cart | null>(null);
+    const [busyItems, setBusyItems] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         loadData();
@@ -31,12 +32,14 @@ export default function RestaurantDetailScreen() {
 
     const loadData = async () => {
         try {
-            const [restData, menuData] = await Promise.all([
+            const [restData, menuData, cartData] = await Promise.all([
                 getRestaurant(id),
-                getMenu(id)
+                getMenu(id),
+                getCart().catch(() => null),
             ]);
             setRestaurant(restData);
             setMenuItems(menuData);
+            setCart(cartData);
         } catch (error) {
             console.error('Failed to load restaurant data:', error);
         } finally {
@@ -44,18 +47,50 @@ export default function RestaurantDetailScreen() {
         }
     };
 
-    const handleAddToCart = async (menuItemId: string, restaurant_id: string) => {
-        if (isAdding) return;
-        console.log("Addding item id : " + menuItemId + " rest_id : " + restaurant_id)
-        setIsAdding(true);
+    const getItemQuantity = (menuItemId: string): number => {
+        if (!cart) return 0;
+        const cartItem = cart.items.find(i => i.menu_item_id === menuItemId && i.restaurant_id === id);
+        return cartItem ? cartItem.quantity : 0;
+    };
+
+    const getCartItemId = (menuItemId: string): number | null => {
+        if (!cart) return null;
+        const cartItem = cart.items.find(i => i.menu_item_id === menuItemId && i.restaurant_id === id);
+        return cartItem ? cartItem.id : null;
+    };
+
+    const handleIncrement = async (menuItemId: string) => {
+        if (busyItems.has(menuItemId)) return;
+        setBusyItems(prev => new Set(prev).add(menuItemId));
         try {
-            await addToCart(menuItemId, 1, restaurant_id);
-            Alert.alert("Success", "Added to cart!");
+            const updatedCart = await addToCart(menuItemId, 1, id);
+            setCart(updatedCart);
         } catch (error) {
             console.error('Failed to add to cart:', error);
-            Alert.alert("Error", "Could not add to cart");
+            Alert.alert("Error", "Could not update cart");
         } finally {
-            setIsAdding(false);
+            setBusyItems(prev => { const n = new Set(prev); n.delete(menuItemId); return n; });
+        }
+    };
+
+    const handleDecrement = async (menuItemId: string) => {
+        const cartItemId = getCartItemId(menuItemId);
+        if (!cartItemId || busyItems.has(menuItemId)) return;
+        setBusyItems(prev => new Set(prev).add(menuItemId));
+        try {
+            const currentQty = getItemQuantity(menuItemId);
+            if (currentQty <= 1) {
+                const updatedCart = await removeFromCart(cartItemId);
+                setCart(updatedCart);
+            } else {
+                const updatedCart = await addToCart(menuItemId, -1, id);
+                setCart(updatedCart);
+            }
+        } catch (error) {
+            console.error('Failed to update cart:', error);
+            Alert.alert("Error", "Could not update cart");
+        } finally {
+            setBusyItems(prev => { const n = new Set(prev); n.delete(menuItemId); return n; });
         }
     };
 
@@ -67,6 +102,8 @@ export default function RestaurantDetailScreen() {
         );
     }
 
+    const totalCartItems = cart?.items.filter(i => i.restaurant_id === id).reduce((s, i) => s + i.quantity, 0) || 0;
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header */}
@@ -75,45 +112,77 @@ export default function RestaurantDetailScreen() {
                     <Text style={styles.backText}>◀ Back</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{restaurant?.name || 'Restaurant'}</Text>
-                <TouchableOpacity>
-                    <Ionicons
-                        name="cart-outline" size={24} color={Colors.primary}
-                        onPress={() => { router.push("/cart") }} />
+                <TouchableOpacity onPress={() => router.push("/cart")}>
+                    <View>
+                        <Ionicons name="cart-outline" size={24} color={Colors.primary} />
+                        {totalCartItems > 0 && (
+                            <View style={styles.cartBadge}>
+                                <Text style={styles.cartBadgeText}>{totalCartItems}</Text>
+                            </View>
+                        )}
+                    </View>
                 </TouchableOpacity>
             </View>
 
             {/* Menu List */}
             <ScrollView showsVerticalScrollIndicator={false}>
-                {menuItems.map((item) => (
-                    <View key={item.id} style={styles.menuCard}>
-                        <View style={styles.menuImage}>
-                            {item.image_url ? (
-                                <Image source={{ uri: item.image_url }} style={{ width: '100%', height: '100%', borderRadius: BorderRadius.lg }} />
-                            ) : (
-                                <Ionicons name="fast-food-outline" size={28} color={Colors.textMuted} />
-                            )}
+                {menuItems.map((item) => {
+                    const qty = getItemQuantity(item.id);
+                    const isBusy = busyItems.has(item.id);
+
+                    return (
+                        <View key={item.id} style={styles.menuCard}>
+                            <View style={styles.menuImage}>
+                                {item.image_url ? (
+                                    <Image source={{ uri: item.image_url }} style={{ width: '100%', height: '100%', borderRadius: BorderRadius.lg }} />
+                                ) : (
+                                    <Ionicons name="fast-food-outline" size={28} color={Colors.textMuted} />
+                                )}
+                            </View>
+                            <View style={styles.menuInfo}>
+                                <StarRating count={5} />
+                                <Text style={styles.menuName}>{item.name}</Text>
+                                <Text style={styles.menuPrice}>Price : {item.price} Baht</Text>
+                            </View>
+                            <View style={styles.menuActions}>
+                                {qty === 0 ? (
+                                    <TouchableOpacity
+                                        style={[styles.addToCartBtn, isBusy && { opacity: 0.5 }]}
+                                        activeOpacity={0.7}
+                                        onPress={() => handleIncrement(item.id)}
+                                        disabled={isBusy}
+                                    >
+                                        <Text style={styles.addToCartText}>Add to cart</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <View style={styles.stepperContainer}>
+                                        <TouchableOpacity
+                                            style={styles.stepperButton}
+                                            onPress={() => handleDecrement(item.id)}
+                                            disabled={isBusy}
+                                        >
+                                            <Ionicons name="remove" size={16} color={Colors.primary} />
+                                        </TouchableOpacity>
+                                        <Text style={styles.stepperText}>{qty}</Text>
+                                        <TouchableOpacity
+                                            style={styles.stepperButton}
+                                            onPress={() => handleIncrement(item.id)}
+                                            disabled={isBusy}
+                                        >
+                                            <Ionicons name="add" size={16} color={Colors.primary} />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
                         </View>
-                        <View style={styles.menuInfo}>
-                            <StarRating count={5} />
-                            <Text style={styles.menuName}>{item.name}</Text>
-                            <Text style={styles.menuPrice}>Price : {item.price} Baht</Text>
-                        </View>
-                        <View style={styles.menuActions}>
-                            <TouchableOpacity style={styles.addToCartBtn} activeOpacity={0.7} onPress={() => handleAddToCart(item.id, id)}>
-                                <Text style={styles.addToCartText}>Add to cart</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.orderNowBtn} activeOpacity={0.7}>
-                                <Text style={styles.orderNowText}>Order now</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                ))}
+                    );
+                })}
                 <View style={{ height: 100 }} />
             </ScrollView>
 
             {/* Proceed to Order Button */}
             <View style={styles.bottomBar}>
-                <TouchableOpacity style={styles.proceedButton} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.proceedButton} activeOpacity={0.7} onPress={() => router.push("/cart")}>
                     <Text style={styles.proceedText}>Proceed to order</Text>
                 </TouchableOpacity>
             </View>
@@ -142,6 +211,22 @@ const styles = StyleSheet.create({
         fontSize: FontSize.lg,
         fontWeight: '700',
         color: Colors.text,
+    },
+    cartBadge: {
+        position: 'absolute',
+        top: -6,
+        right: -8,
+        backgroundColor: Colors.accent,
+        borderRadius: 10,
+        width: 18,
+        height: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cartBadgeText: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: Colors.primary,
     },
     menuCard: {
         flexDirection: 'row',
@@ -176,8 +261,8 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
     },
     menuActions: {
-        gap: Spacing.xs,
         alignItems: 'flex-end',
+        justifyContent: 'center',
     },
     addToCartBtn: {
         borderWidth: 1.5,
@@ -191,16 +276,31 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: Colors.primary,
     },
-    orderNowBtn: {
-        backgroundColor: Colors.accent,
+    stepperContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.surface,
         borderRadius: BorderRadius.full,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: 5,
+        borderWidth: 1.5,
+        borderColor: Colors.primary,
+        paddingHorizontal: 4,
+        paddingVertical: 2,
     },
-    orderNowText: {
-        fontSize: FontSize.xs,
-        fontWeight: '600',
-        color: Colors.primary,
+    stepperButton: {
+        width: 28,
+        height: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: Colors.card,
+        borderRadius: BorderRadius.full,
+    },
+    stepperText: {
+        fontSize: FontSize.md,
+        fontWeight: 'bold',
+        color: Colors.text,
+        marginHorizontal: 12,
+        minWidth: 16,
+        textAlign: 'center',
     },
     bottomBar: {
         position: 'absolute',

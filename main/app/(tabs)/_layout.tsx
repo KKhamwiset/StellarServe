@@ -1,8 +1,27 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRole = async () => {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setRole(user.role || 'consumer');
+      } else {
+        setRole('consumer');
+      }
+    };
+    loadRole();
+  }, []);
+
+  const isSeller = role === 'seller';
+
   return (
     <Tabs
       screenOptions={{
@@ -29,11 +48,13 @@ export default function TabLayout() {
         },
       }}
     >
+      {/* Consumer tabs */}
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           headerShown: false,
+          href: isSeller ? null : '/(tabs)',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="storefront" size={size} color={color} />
           ),
@@ -44,6 +65,7 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           headerShown: false,
+          href: isSeller ? null : '/(tabs)/search',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -54,11 +76,49 @@ export default function TabLayout() {
         options={{
           title: 'Favorite',
           headerShown: false,
+          href: isSeller ? null : '/(tabs)/favorite',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bookmark" size={size} color={color} />
           ),
         }}
       />
+
+      {/* Seller tabs */}
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          headerShown: false,
+          href: isSeller ? '/(tabs)/dashboard' : null,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="menu-manager"
+        options={{
+          title: 'Menu',
+          headerShown: false,
+          href: isSeller ? '/(tabs)/menu-manager' : null,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="restaurant" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="seller-orders"
+        options={{
+          title: 'Orders',
+          headerShown: false,
+          href: isSeller ? '/(tabs)/seller-orders' : null,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="receipt" size={size} color={color} />
+          ),
+        }}
+      />
+
+      {/* Shared tab */}
       <Tabs.Screen
         name="profile"
         options={{

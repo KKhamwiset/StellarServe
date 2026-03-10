@@ -4,6 +4,10 @@ import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
 import { styles } from '@/styles/profile.styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
+import { User } from '@/services/api';
+
 
 const MENU_ITEMS = [
     { icon: 'location', label: 'Delivery Address', value: 'Set your address' },
@@ -16,7 +20,19 @@ const MENU_ITEMS = [
     { icon: 'log-out', label: 'Sign Out', value: '', danger: true },
 ];
 
+
+
 export default function ProfileScreen() {
+    const [user, setUser] = useState<User | null>(null);
+    useEffect(() => {
+        const getUser = async () => {
+            const user = await AsyncStorage.getItem('user');
+            if (user) {
+                setUser(JSON.parse(user));
+            }
+        };
+        getUser();
+    }, []);
     const handleLogout = async () => {
         try {
             await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.logout}`, {
@@ -43,8 +59,8 @@ export default function ProfileScreen() {
                     <Ionicons name="person" size={40} color={Colors.primary} />
                 </View>
                 <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>Guest User</Text>
-                    <Text style={styles.profileEmail}>Sign in to get started</Text>
+                    <Text style={styles.profileName}>{user?.full_name}</Text>
+                    <Text style={styles.profileEmail}>{user?.email}</Text>
                 </View>
                 <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
                     <Ionicons name="create" size={18} color={Colors.primary} />

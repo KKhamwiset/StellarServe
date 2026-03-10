@@ -136,3 +136,34 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
+
+export const roleSelectorStyles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+    },
+    option: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.md,
+        borderWidth: 1.5,
+        borderColor: Colors.border,
+        backgroundColor: Colors.surface,
+    },
+    optionActive: {
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
+    },
+    optionText: {
+        fontSize: FontSize.md,
+        fontWeight: '600',
+        color: Colors.textMuted,
+    },
+    optionTextActive: {
+        color: Colors.white,
+    },
+});

@@ -3,9 +3,11 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from jose import jwt, JWTError
+import uuid
 
 from app.database import get_db
 from app.models.user import User
+from app.models.restaurant import Restaurant
 from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, TokenData
 from app.security import verify_password, get_password_hash, create_access_token
 from app.config import get_settings
@@ -65,6 +67,18 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
                 detail="A user with this phone number already exists"
             )
 
+    if user_in.role and user_in.role not in ("consumer", "seller"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Role must be 'consumer' or 'seller'"
+        )
+
+    if user_in.role == "seller" and not user_in.restaurant_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Restaurant name is required for seller registration"
+        )
+
     hashed_password = get_password_hash(user_in.password)
     new_user = User(
         email=user_in.email,
@@ -72,11 +86,27 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hashed_password,
         full_name=user_in.full_name,
         phone=user_in.phone,
+        role=user_in.role or "consumer",
     )
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    if new_user.role == "seller" and user_in.restaurant_name:
+        new_restaurant = Restaurant(
+            id=f"rest-{uuid.uuid4().hex[:8]}",
+            owner_id=new_user.id,
+            name=user_in.restaurant_name,
+            description="",
+            cuisine_type="",
+            address="",
+            phone=user_in.phone or "",
+            opening_time="00:00",
+            closing_time="23:59",
+        )
+        db.add(new_restaurant)
+        db.commit()
     
     return new_user
 
@@ -90,7 +120,6 @@ async def login(user_in: UserLogin, db: Session = Depends(get_db)):
             User.username == user_in.identifier
         )
     ).first()
-    
     if not user or not verify_password(user_in.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -99,7 +128,11 @@ async def login(user_in: UserLogin, db: Session = Depends(get_db)):
         )
     
     access_token = create_access_token(email=user.email)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user
+    }
 
 
 @router.get("/me", response_model=UserResponse)

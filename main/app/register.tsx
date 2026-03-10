@@ -15,7 +15,7 @@ import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
-import { styles } from '@/styles/register.styles';
+import { styles, roleSelectorStyles } from '@/styles/register.styles';
 
 export default function RegisterScreen() {
     const [fullName, setFullName] = useState('');
@@ -27,6 +27,8 @@ export default function RegisterScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [role, setRole] = useState<'consumer' | 'seller'>('consumer');
+    const [restaurantName, setRestaurantName] = useState('');
 
     const handleRegister = async () => {
         if (password !== confirmPassword) {
@@ -43,6 +45,8 @@ export default function RegisterScreen() {
             email: email,
             phone: phone,
             password: password,
+            role: role,
+            ...(role === 'seller' && { restaurant_name: restaurantName }),
         }
 
         try {
@@ -97,6 +101,49 @@ export default function RegisterScreen() {
                     </View>
 
                     <View style={styles.form}>
+                        {/* Role Selector */}
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>I want to join as</Text>
+                            <View style={roleSelectorStyles.container}>
+                                <TouchableOpacity
+                                    style={[
+                                        roleSelectorStyles.option,
+                                        role === 'consumer' && roleSelectorStyles.optionActive,
+                                    ]}
+                                    onPress={() => setRole('consumer')}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons
+                                        name="person-outline"
+                                        size={20}
+                                        color={role === 'consumer' ? Colors.white : Colors.textMuted}
+                                    />
+                                    <Text style={[
+                                        roleSelectorStyles.optionText,
+                                        role === 'consumer' && roleSelectorStyles.optionTextActive,
+                                    ]}>Consumer</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[
+                                        roleSelectorStyles.option,
+                                        role === 'seller' && roleSelectorStyles.optionActive,
+                                    ]}
+                                    onPress={() => setRole('seller')}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons
+                                        name="storefront-outline"
+                                        size={20}
+                                        color={role === 'seller' ? Colors.white : Colors.textMuted}
+                                    />
+                                    <Text style={[
+                                        roleSelectorStyles.optionText,
+                                        role === 'seller' && roleSelectorStyles.optionTextActive,
+                                    ]}>Seller</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Full Name</Text>
                             <View style={styles.inputWrapper}>
@@ -126,6 +173,22 @@ export default function RegisterScreen() {
                             </View>
                         </View>
 
+                        {role === 'seller' && (
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Restaurant Name</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="restaurant-outline" size={20} color={Colors.textMuted} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="My Restaurant"
+                                        placeholderTextColor={Colors.textMuted}
+                                        value={restaurantName}
+                                        onChangeText={setRestaurantName}
+                                    />
+                                </View>
+                            </View>
+                        )}
+
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Email Address</Text>
                             <View style={styles.inputWrapper}>
@@ -141,6 +204,22 @@ export default function RegisterScreen() {
                                 />
                             </View>
                         </View>
+
+                        {role === 'seller' && (
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Restaurant Name</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="restaurant-outline" size={20} color={Colors.textMuted} style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="My Restaurant"
+                                        placeholderTextColor={Colors.textMuted}
+                                        value={restaurantName}
+                                        onChangeText={setRestaurantName}
+                                    />
+                                </View>
+                            </View>
+                        )}
 
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Phone Number</Text>

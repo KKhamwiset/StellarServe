@@ -42,7 +42,12 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
     return response.json();
 }
-
+export interface User {
+    full_name: string;
+    email: string;
+    phone: string;
+    role: string;
+}
 // ─── Restaurant API ─────────────────────────────────────
 export interface Restaurant {
     id: string;

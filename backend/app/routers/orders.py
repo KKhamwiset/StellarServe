@@ -15,7 +15,7 @@ from .auth import get_current_user
 router = APIRouter()
 
 
-@router.post("/checkout", response_model=OrderResponse)
+@router.post("/", response_model=OrderResponse)
 async def create_order_from_cart(
     order_in: OrderCreate,
     current_user: User = Depends(get_current_user),
@@ -129,8 +129,6 @@ def _build_order_response(order: Order, order_in: OrderCreate, db: Session) -> O
             )
         )
         
-    # Since delivery info isn't on the Order model yet, if it was just passed in we use that,
-    # otherwise we use an empty string for now or fetch from user profile eventually
     delivery_address = order_in.delivery_address if order_in else ""
     phone = order_in.phone if order_in else ""
     notes = order_in.notes if order_in else ""

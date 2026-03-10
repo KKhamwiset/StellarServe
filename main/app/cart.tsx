@@ -1,23 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
     ScrollView,
+    LayoutAnimation,
+    UIManager,
     Image,
-    SafeAreaView,
     Platform,
     ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { getCart, addToCart, removeFromCart, createOrder, Cart } from '@/services/api';
 
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 export default function CartScreen() {
     const [cart, setCart] = useState<Cart | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+    const toggleGroup = useCallback((restaurantId: string) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpandedGroups(prev => {
+            const next = new Set(prev);
+            if (next.has(restaurantId)) {
+                next.delete(restaurantId);
+            } else {
+                next.add(restaurantId);
+            }
+            return next;
+        });
+    }, []);
 
     useEffect(() => {
         loadCart();
@@ -51,26 +72,11 @@ export default function CartScreen() {
         }
     };
 
-    const handleCheckout = async (restaurantId: string) => {
-        if (!cart || cart.items.length === 0) return;
-
-        const itemsToCheckout = cart.items.filter(i => i.restaurant_id === restaurantId);
-        if (itemsToCheckout.length === 0) return;
-
-        try {
-            await createOrder({
-                restaurant_id: restaurantId,
-                items: itemsToCheckout.map(item => ({
-                    menu_item_id: item.menu_item_id,
-                    quantity: item.quantity
-                })),
-                delivery_address: 'Default Address',
-                phone: '0000000000'
-            });
-            await loadCart();
-        } catch (error) {
-            console.error('Checkout failed:', error);
-        }
+    const handleCheckout = (restaurantId: string) => {
+        router.push({
+            pathname: '/checkout',
+            params: { restaurantId }
+        });
     };
 
     const cartItems = cart?.items || [];
@@ -83,16 +89,24 @@ export default function CartScreen() {
         return acc;
     }, {} as Record<string, typeof cartItems>);
 
+    // Auto-expand all groups on first load
+    useEffect(() => {
+        const ids = Object.keys(groupedItems);
+        if (ids.length > 0 && expandedGroups.size === 0) {
+            setExpandedGroups(new Set(ids));
+        }
+    }, [cartItems.length]);
+
     if (isLoading) {
         return (
-            <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+            <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
                 <ActivityIndicator size="large" color={Colors.primary} />
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Your Cart</Text>
@@ -121,55 +135,90 @@ export default function CartScreen() {
                                 const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                                 const deliveryFee = 50;
                                 const total = subtotal + deliveryFee;
+                                const isExpanded = expandedGroups.has(restaurantId);
+                                const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
                                 return (
                                     <View key={restaurantId} style={styles.restaurantGroup}>
-                                        <Text style={styles.groupHeader}>Order from {restaurantId}</Text>
-                                        {items.map((item) => (
-                                            <View key={item.id} style={styles.cartItem}>
-                                                <Image source={{ uri: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=200&auto=format&fit=crop' }} style={styles.itemImage} />
-                                                <View style={styles.itemDetails}>
-                                                    <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                                                    <Text style={styles.itemPrice}>฿{item.price}</Text>
-                                                </View>
-                                                <View style={styles.quantityControl}>
-                                                    <TouchableOpacity
-                                                        style={styles.quantityButton}
-                                                        onPress={() => updateQuantity(item.id, item.quantity, -1)}
-                                                    >
-                                                        <Ionicons name="remove" size={16} color={Colors.primary} />
-                                                    </TouchableOpacity>
-                                                    <Text style={styles.quantityText}>{item.quantity}</Text>
-                                                    <TouchableOpacity
-                                                        style={styles.quantityButton}
-                                                        onPress={() => updateQuantity(item.id, item.quantity, 1)}
-                                                    >
-                                                        <Ionicons name="add" size={16} color={Colors.primary} />
-                                                    </TouchableOpacity>
-                                                </View>
+                                        <TouchableOpacity
+                                            style={styles.groupHeaderRow}
+                                            onPress={() => toggleGroup(restaurantId)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <View style={styles.groupHeaderLeft}>
+                                                <Ionicons name="restaurant-outline" size={18} color={Colors.primary} />
+                                                <Text style={styles.groupHeader}>Order from {restaurantId}</Text>
                                             </View>
-                                        ))}
+                                            <View style={styles.groupHeaderRight}>
+                                                <View style={styles.itemCountBadge}>
+                                                    <Text style={styles.itemCountText}>{itemCount}</Text>
+                                                </View>
+                                                <Ionicons
+                                                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                                                    size={20}
+                                                    color={Colors.textMuted}
+                                                />
+                                            </View>
+                                        </TouchableOpacity>
 
-                                        <View style={styles.summarySection}>
-                                            <View style={styles.summaryRow}>
-                                                <Text style={styles.summaryLabel}>Subtotal</Text>
-                                                <Text style={styles.summaryValue}>฿{subtotal}</Text>
-                                            </View>
-                                            <View style={styles.summaryRow}>
-                                                <Text style={styles.summaryLabel}>Delivery Fee</Text>
-                                                <Text style={styles.summaryValue}>฿{deliveryFee}</Text>
-                                            </View>
-                                            <View style={[styles.summaryRow, styles.totalRow]}>
-                                                <Text style={styles.totalLabel}>Total</Text>
-                                                <Text style={styles.totalValue}>฿{total}</Text>
-                                            </View>
-                                            <TouchableOpacity style={[styles.checkoutButton, { marginTop: Spacing.md }]} activeOpacity={0.8} onPress={() => handleCheckout(restaurantId)}>
-                                                <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-                                                <View style={styles.checkoutPriceTag}>
-                                                    <Text style={styles.checkoutPriceText}>฿{total}</Text>
+                                        {isExpanded && (
+                                            <>
+                                                {items.map((item) => (
+                                                    <View key={item.id} style={styles.cartItem}>
+                                                        <Image source={{ uri: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=200&auto=format&fit=crop' }} style={styles.itemImage} />
+                                                        <View style={styles.itemDetails}>
+                                                            <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                                                            <Text style={styles.itemPrice}>฿{item.price}</Text>
+                                                        </View>
+                                                        <View style={styles.quantityControl}>
+                                                            <TouchableOpacity
+                                                                style={styles.quantityButton}
+                                                                onPress={() => updateQuantity(item.id, item.quantity, -1)}
+                                                            >
+                                                                <Ionicons name="remove" size={16} color={Colors.primary} />
+                                                            </TouchableOpacity>
+                                                            <Text style={styles.quantityText}>{item.quantity}</Text>
+                                                            <TouchableOpacity
+                                                                style={styles.quantityButton}
+                                                                onPress={() => updateQuantity(item.id, item.quantity, 1)}
+                                                            >
+                                                                <Ionicons name="add" size={16} color={Colors.primary} />
+                                                            </TouchableOpacity>
+                                                        </View>
+                                                    </View>
+                                                ))}
+
+                                                <View style={styles.summarySection}>
+                                                    <View style={styles.summaryRow}>
+                                                        <Text style={styles.summaryLabel}>Subtotal</Text>
+                                                        <Text style={styles.summaryValue}>฿{subtotal}</Text>
+                                                    </View>
+                                                    <View style={styles.summaryRow}>
+                                                        <Text style={styles.summaryLabel}>Delivery Fee</Text>
+                                                        <Text style={styles.summaryValue}>฿{deliveryFee}</Text>
+                                                    </View>
+                                                    <View style={[styles.summaryRow, styles.totalRow]}>
+                                                        <Text style={styles.totalLabel}>Total</Text>
+                                                        <Text style={styles.totalValue}>฿{total}</Text>
+                                                    </View>
+                                                    <TouchableOpacity style={[styles.checkoutButton, { marginTop: Spacing.md }]} activeOpacity={0.8} onPress={() => handleCheckout(restaurantId)}>
+                                                        <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+                                                        <View style={styles.checkoutPriceTag}>
+                                                            <Text style={styles.checkoutPriceText}>฿{total}</Text>
+                                                        </View>
+                                                    </TouchableOpacity>
                                                 </View>
-                                            </TouchableOpacity>
-                                        </View>
+                                            </>
+                                        )}
+
+                                        {!isExpanded && (
+                                            <View style={styles.collapsedSummary}>
+                                                <Text style={styles.collapsedSummaryText}>฿{total}</Text>
+                                                <TouchableOpacity style={styles.collapsedCheckoutBtn} activeOpacity={0.8} onPress={() => handleCheckout(restaurantId)}>
+                                                    <Text style={styles.collapsedCheckoutText}>Checkout</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        )}
                                     </View>
                                 );
                             })}
@@ -244,13 +293,69 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.surface,
         borderRadius: BorderRadius.xl,
         padding: Spacing.md,
+        overflow: 'hidden',
+    },
+    groupHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: Spacing.xs,
+        paddingHorizontal: Spacing.xs,
+        marginBottom: Spacing.sm,
+    },
+    groupHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        flex: 1,
+    },
+    groupHeaderRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
     },
     groupHeader: {
-        fontSize: FontSize.lg,
+        fontSize: FontSize.md,
         fontWeight: 'bold',
         color: Colors.primary,
-        marginBottom: Spacing.md,
-        paddingHorizontal: Spacing.xs,
+    },
+    itemCountBadge: {
+        backgroundColor: Colors.primary,
+        borderRadius: 10,
+        minWidth: 22,
+        height: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+    },
+    itemCountText: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: Colors.white,
+    },
+    collapsedSummary: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingTop: Spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: Colors.border,
+    },
+    collapsedSummaryText: {
+        fontSize: FontSize.md,
+        fontWeight: 'bold',
+        color: Colors.primary,
+    },
+    collapsedCheckoutBtn: {
+        backgroundColor: Colors.primary,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 6,
+        borderRadius: BorderRadius.full,
+    },
+    collapsedCheckoutText: {
+        color: Colors.white,
+        fontSize: FontSize.sm,
+        fontWeight: 'bold',
     },
     cartItem: {
         flexDirection: 'row',
