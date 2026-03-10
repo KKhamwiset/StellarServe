@@ -3,6 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
 
 const FEATURED = [
   { id: 'rest-001', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
@@ -39,7 +41,48 @@ function StarRating({ count = 5 }: { count?: number }) {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        console.log('user data:', userData);
+        if (userData) {
+          setUser(JSON.parse(userData));
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const role = user?.role;
+  const isSeller = role === 'seller';
+
+  // Redirect sellers to the dashboard tab
+  useEffect(() => {
+    if (!loading && isSeller) {
+      router.replace('/(tabs)/dashboard');
+    }
+  }, [loading, isSeller]);
+
+
+  if (loading || isSeller) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: Colors.textMuted }}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Consumer view
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
