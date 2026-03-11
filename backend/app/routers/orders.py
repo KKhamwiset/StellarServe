@@ -129,6 +129,28 @@ async def get_order(
         
     return _build_order_response(order, None, db)
 
+@router.put("/{order_id}/status", response_model=OrderResponse)
+async def update_order_status(
+    order_id: str,
+    status: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update the status of an order."""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    restaurant = db.query(Restaurant).filter(Restaurant.owner_id == current_user.id).first()
+    if not restaurant or order.restaurant_id != restaurant.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this order")
+        
+    order.status = status
+    db.commit()
+    db.refresh(order)
+    
+    return _build_order_response(order, None, db)
 
 def _build_order_response(order: Order, order_in: OrderCreate, db: Session) -> OrderResponse:
     """Helper to populate nested OrderResponse."""

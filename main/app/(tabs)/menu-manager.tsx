@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, FlatList } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { MenuModal } from '@/components/ui/menu-modal';
+import { ModalProps } from '@/components/ui/modal';
 import { useState, useEffect, useCallback } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -159,7 +159,7 @@ export default function MenuManagerScreen() {
             )}
 
             {modalVisible && (
-                <MenuModal title="Add Menu Item" onClose={() => setModalVisible(false)}>
+                <ModalProps title="Add Menu Item" onClose={() => setModalVisible(false)}>
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Name *</Text>
                         <TextInput
@@ -223,7 +223,7 @@ export default function MenuManagerScreen() {
                             {loading ? 'Adding...' : 'Add Item'}
                         </Text>
                     </TouchableOpacity>
-                </MenuModal>
+                </ModalProps>
             )}
         </SafeAreaView>
     );

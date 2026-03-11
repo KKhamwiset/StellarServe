@@ -3,12 +3,12 @@ import { PropsWithChildren } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 
-interface MenuModalProps {
+interface ModalProps {
     title: string;
     onClose: () => void;
 }
 
-export function MenuModal({ children, title, onClose }: PropsWithChildren & MenuModalProps) {
+export function ModalProps({ children, title, onClose }: PropsWithChildren & ModalProps) {
     return (
         <Modal visible={true} transparent={true} animationType="fade">
             <TouchableOpacity

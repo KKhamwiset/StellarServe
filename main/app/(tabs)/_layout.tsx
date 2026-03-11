@@ -82,6 +82,17 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="order-history"
+        options={{
+          title: 'Order History',
+          headerShown: false,
+          href: isSeller ? null : '/(tabs)/order-history',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="time-outline" size={size} color={color} />
+          ),
+        }}
+      />
 
       {/* Seller tabs */}
       <Tabs.Screen

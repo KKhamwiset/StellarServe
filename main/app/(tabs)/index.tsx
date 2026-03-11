@@ -53,9 +53,7 @@ export default function HomeScreen() {
       }
 
       try {
-        console.log('Fetching restaurants...');
         const restaurants = await getRestaurants();
-        console.log('Restaurants loaded:', restaurants.length, restaurants);
         setFeatured(restaurants);
       } catch (error) {
         console.error('Failed to load restaurants:', error);

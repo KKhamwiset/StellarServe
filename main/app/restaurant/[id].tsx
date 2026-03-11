@@ -126,6 +126,37 @@ export default function RestaurantDetailScreen() {
 
             {/* Menu List */}
             <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Restaurant Banner */}
+                {restaurant && (
+                    <View style={styles.banner}>
+                        <Text style={styles.bannerName}>{restaurant.name}</Text>
+                        {restaurant.cuisine_type && (
+                            <Text style={styles.bannerCuisine}>{restaurant.cuisine_type}</Text>
+                        )}
+                        {restaurant.address && (
+                            <View style={styles.bannerRow}>
+                                <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
+                                <Text style={styles.bannerDetail}>{restaurant.address}</Text>
+                            </View>
+                        )}
+                        <View style={styles.bannerRow}>
+                            <StarRating count={Math.round(restaurant.rating)} />
+                            <View style={[styles.bannerStatusBadge, { backgroundColor: restaurant.is_open ? Colors.success + '20' : Colors.error + '20' }]}>
+                                <View style={[styles.bannerStatusDot, { backgroundColor: restaurant.is_open ? Colors.success : Colors.error }]} />
+                                <Text style={[styles.bannerStatusText, { color: restaurant.is_open ? Colors.success : Colors.error }]}>
+                                    {restaurant.is_open ? 'Open' : 'Closed'}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                )}
+
+                {/* Menu Items */}
+                <View style={styles.menuSectionHeader}>
+                    <Text style={styles.menuSectionTitle}>Menu</Text>
+                    <Text style={styles.menuSectionCount}>{menuItems.length} items</Text>
+                </View>
+
                 {menuItems.map((item) => {
                     const qty = getItemQuantity(item.id);
                     const isBusy = busyItems.has(item.id);
@@ -140,9 +171,14 @@ export default function RestaurantDetailScreen() {
                                 )}
                             </View>
                             <View style={styles.menuInfo}>
-                                <StarRating count={5} />
                                 <Text style={styles.menuName}>{item.name}</Text>
-                                <Text style={styles.menuPrice}>Price : {item.price} Baht</Text>
+                                {item.description && (
+                                    <Text style={styles.menuDescription} numberOfLines={1}>{item.description}</Text>
+                                )}
+                                <View style={styles.priceRow}>
+                                    <Text style={styles.menuPriceSymbol}>฿</Text>
+                                    <Text style={styles.menuPrice}>{item.price.toFixed(2)}</Text>
+                                </View>
                             </View>
                             <View style={styles.menuActions}>
                                 {qty === 0 ? (
@@ -249,16 +285,92 @@ const styles = StyleSheet.create({
     menuInfo: {
         flex: 1,
         paddingHorizontal: Spacing.md,
-        gap: 2,
+        gap: 3,
     },
     menuName: {
         fontSize: FontSize.md,
         fontWeight: '700',
         color: Colors.text,
     },
-    menuPrice: {
+    menuDescription: {
+        fontSize: FontSize.xs,
+        color: Colors.textMuted,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        gap: 2,
+        marginTop: 2,
+    },
+    menuPriceSymbol: {
         fontSize: FontSize.sm,
-        color: Colors.textSecondary,
+        fontWeight: '800',
+        color: Colors.accent,
+    },
+    menuPrice: {
+        fontSize: FontSize.lg,
+        fontWeight: '800',
+        color: Colors.accent,
+    },
+    banner: {
+        backgroundColor: Colors.primary,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.lg,
+        gap: 6,
+    },
+    bannerName: {
+        fontSize: FontSize.xxl,
+        fontWeight: '800',
+        color: Colors.white,
+    },
+    bannerCuisine: {
+        fontSize: FontSize.sm,
+        fontWeight: '600',
+        color: Colors.accentLight,
+    },
+    bannerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    bannerDetail: {
+        fontSize: FontSize.sm,
+        color: Colors.textMuted,
+    },
+    bannerStatusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.full,
+        marginLeft: Spacing.sm,
+    },
+    bannerStatusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    bannerStatusText: {
+        fontSize: FontSize.xs,
+        fontWeight: '600',
+    },
+    menuSectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: Spacing.lg,
+        paddingTop: Spacing.lg,
+        paddingBottom: Spacing.sm,
+    },
+    menuSectionTitle: {
+        fontSize: FontSize.xl,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    menuSectionCount: {
+        fontSize: FontSize.sm,
+        color: Colors.textMuted,
     },
     menuActions: {
         alignItems: 'flex-end',

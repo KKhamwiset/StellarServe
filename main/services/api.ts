@@ -171,3 +171,9 @@ export async function getOrders(): Promise<Order[]> {
 export async function getSellerOrders(): Promise<Order[]> {
     return request<Order[]>(`${API_ENDPOINTS.orders}/seller`);
 }
+
+export async function updateOrderStatus(orderId: string, status: string): Promise<Order> {
+    return request<Order>(`${API_ENDPOINTS.orders}/${orderId}/status?status=${encodeURIComponent(status)}`, {
+        method: 'PUT',
+    });
+}

@@ -1,22 +1,15 @@
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-
-const MOCK_RESULTS = [
-    { id: 'rest-001', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-    { id: 'rest-002', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-    { id: 'rest-003', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-    { id: 'rest-004', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-    { id: 'rest-005', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-];
+import { getRestaurants, Restaurant } from '@/services/api';
 
 function StarRating({ count = 5 }: { count?: number }) {
     return (
         <View style={{ flexDirection: 'row', gap: 2 }}>
-            {Array.from({ length: count }).map((_, i) => (
+            {Array.from({ length: Math.round(count) }).map((_, i) => (
                 <Ionicons key={i} name="star" size={14} color={Colors.star} />
             ))}
         </View>
@@ -26,6 +19,34 @@ function StarRating({ count = 5 }: { count?: number }) {
 export default function SearchScreen() {
     const [query, setQuery] = useState('');
     const router = useRouter();
+    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        loadRestaurants();
+    }, []);
+
+    const loadRestaurants = async () => {
+        try {
+            const data = await getRestaurants();
+            setRestaurants(data);
+        } catch (error) {
+            console.error('Failed to load restaurants:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const filtered = useMemo(() => {
+        if (!query.trim()) return restaurants;
+        const q = query.toLowerCase();
+        return restaurants.filter(
+            (r) =>
+                r.name.toLowerCase().includes(q) ||
+                (r.address && r.address.toLowerCase().includes(q)) ||
+                (r.cuisine_type && r.cuisine_type.toLowerCase().includes(q))
+        );
+    }, [query, restaurants]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -42,7 +63,7 @@ export default function SearchScreen() {
                     <Ionicons name="search-outline" size={18} color={Colors.textMuted} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Search"
+                        placeholder="Search restaurants..."
                         placeholderTextColor={Colors.textMuted}
                         value={query}
                         onChangeText={setQuery}
@@ -69,33 +90,55 @@ export default function SearchScreen() {
             </View>
 
             {/* Results */}
-            <ScrollView style={styles.results} showsVerticalScrollIndicator={false}>
-                {MOCK_RESULTS.map((item, index) => (
-                    <TouchableOpacity
-                        key={item.id}
-                        style={styles.resultCard}
-                        activeOpacity={0.7}
-                        onPress={() => router.push(`/restaurant/${item.id}`)}
-                    >
-                        <View style={styles.resultImage}>
-                            <Ionicons name="restaurant-outline" size={24} color={Colors.textMuted} />
-                        </View>
-                        <View style={styles.resultInfo}>
-                            <Text style={styles.resultName}>{item.name}</Text>
-                            <View style={styles.resultMeta}>
-                                <Ionicons name="location-outline" size={13} color={Colors.primary} />
-                                <Text style={styles.resultAddress}>{item.address}</Text>
+            {isLoading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                </View>
+            ) : filtered.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <Ionicons name="search" size={48} color={Colors.textMuted} />
+                    <Text style={styles.emptyText}>
+                        {query.trim() ? 'No restaurants match your search' : 'No restaurants available'}
+                    </Text>
+                </View>
+            ) : (
+                <ScrollView style={styles.results} showsVerticalScrollIndicator={false}>
+                    {filtered.map((item) => (
+                        <TouchableOpacity
+                            key={item.id}
+                            style={styles.resultCard}
+                            activeOpacity={0.7}
+                            onPress={() => router.push(`/restaurant/${item.id}`)}
+                        >
+                            <View style={styles.resultImage}>
+                                <Ionicons name="restaurant-outline" size={24} color={Colors.textMuted} />
                             </View>
-                            <View style={styles.resultMeta}>
-                                <Ionicons name="time-outline" size={13} color={Colors.textMuted} />
-                                <Text style={styles.resultTime}>{item.time} · {item.distance}</Text>
+                            <View style={styles.resultInfo}>
+                                <Text style={styles.resultName}>{item.name}</Text>
+                                {item.cuisine_type && (
+                                    <Text style={styles.cuisineTag}>{item.cuisine_type}</Text>
+                                )}
+                                {item.address && (
+                                    <View style={styles.resultMeta}>
+                                        <Ionicons name="location-outline" size={13} color={Colors.primary} />
+                                        <Text style={styles.resultAddress} numberOfLines={1}>{item.address}</Text>
+                                    </View>
+                                )}
+                                <View style={styles.resultBottom}>
+                                    <StarRating count={item.rating} />
+                                    <View style={[styles.statusBadge, { backgroundColor: item.is_open ? Colors.success + '20' : Colors.error + '20' }]}>
+                                        <View style={[styles.statusDot, { backgroundColor: item.is_open ? Colors.success : Colors.error }]} />
+                                        <Text style={[styles.statusText, { color: item.is_open ? Colors.success : Colors.error }]}>
+                                            {item.is_open ? 'Open' : 'Closed'}
+                                        </Text>
+                                    </View>
+                                </View>
                             </View>
-                            <StarRating count={item.rating} />
-                        </View>
-                    </TouchableOpacity>
-                ))}
-                <View style={{ height: 32 }} />
-            </ScrollView>
+                        </TouchableOpacity>
+                    ))}
+                    <View style={{ height: 32 }} />
+                </ScrollView>
+            )}
         </SafeAreaView>
     );
 }
@@ -158,6 +201,23 @@ const styles = StyleSheet.create({
         color: Colors.text,
         fontWeight: '500',
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: Spacing.md,
+        paddingHorizontal: Spacing.xl,
+    },
+    emptyText: {
+        fontSize: FontSize.md,
+        color: Colors.textMuted,
+        textAlign: 'center',
+    },
     results: {
         flex: 1,
         paddingHorizontal: Spacing.lg,
@@ -182,12 +242,17 @@ const styles = StyleSheet.create({
     },
     resultInfo: {
         flex: 1,
-        gap: 3,
+        gap: 4,
     },
     resultName: {
         fontSize: FontSize.md,
         fontWeight: '700',
         color: Colors.text,
+    },
+    cuisineTag: {
+        fontSize: FontSize.xs,
+        color: Colors.accent,
+        fontWeight: '600',
     },
     resultMeta: {
         flexDirection: 'row',
@@ -197,9 +262,29 @@ const styles = StyleSheet.create({
     resultAddress: {
         fontSize: FontSize.xs,
         color: Colors.textSecondary,
+        flex: 1,
     },
-    resultTime: {
+    resultBottom: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 2,
+    },
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: BorderRadius.full,
+    },
+    statusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    statusText: {
         fontSize: FontSize.xs,
-        color: Colors.textMuted,
+        fontWeight: '600',
     },
 });

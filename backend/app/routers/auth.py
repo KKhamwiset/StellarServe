@@ -137,7 +137,6 @@ async def login(user_in: UserLogin, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 async def read_current_user(current_user: User = Depends(get_current_user)):
-    """Get current authenticated user profile."""
     return current_user
 
 @router.post("/logout")
