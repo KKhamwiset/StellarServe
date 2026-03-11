@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.cart import Cart, CartItem
 from app.models.restaurant import MenuItem, Restaurant
 from app.schemas.cart import CartResponse, CartItemCreate, CartItemResponse
-from .auth import get_current_user
+from app.routers.auth import get_current_user
 
 router = APIRouter()
 

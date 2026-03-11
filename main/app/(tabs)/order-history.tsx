@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getOrders, Order } from '@/services/api';
+import { getOrders, Order, checkUserReview, ReviewStat } from '@/services/api';
 import { ModalProps } from '@/components/ui/modal';
 
 const STATUS_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
@@ -27,14 +28,34 @@ function formatDate(iso: string) {
 }
 
 export default function OrderHistoryScreen() {
+    const router = useRouter();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [reviewedRestaurants, setReviewedRestaurants] = useState<Record<string, boolean>>({});
 
     const load = async () => {
         try {
             const data = await getOrders();
+            const uniqueRestaurantIds = [...new Set(data.map(order => order.restaurant_id))];
+            const reviewStatuses = await Promise.all(
+                uniqueRestaurantIds.map(async (id) => {
+                    try {
+                        const res = await checkUserReview(id) as unknown as ReviewStat;
+                        return { id, hasReviewed: res.has_reviewed };
+                    } catch {
+                        return { id, hasReviewed: false };
+                    }
+                })
+            );
+
+            const statusMap: Record<string, boolean> = {};
+            reviewStatuses.forEach(status => {
+                statusMap[status.id] = status.hasReviewed;
+            });
+
+            setReviewedRestaurants(statusMap);
             setOrders(data);
         } catch (e) {
             console.error('Failed to load orders:', e);
@@ -83,40 +104,59 @@ export default function OrderHistoryScreen() {
             >
                 {orders.map((order) => {
                     const sc = getStatusConfig(order.status);
-
                     return (
-                        <TouchableOpacity key={order.id} style={styles.card}
-                            onPress={() => setSelectedOrder(order)}>
-                            {/* Card header */}
-                            <View style={styles.cardHeader}>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={styles.restaurantName}>{order.restaurant_name}</Text>
-                                    <Text style={styles.dateText}>{formatDate(order.created_at)}</Text>
-                                </View>
-                                <View style={[styles.statusBadge, { backgroundColor: sc.color + '18' }]}>
-                                    <Ionicons name={sc.icon as any} size={14} color={sc.color} />
-                                    <Text style={[styles.statusLabel, { color: sc.color }]}>{sc.label}</Text>
-                                </View>
-                            </View>
-
-                            {/* Items summary */}
-                            <View style={styles.itemsList}>
-                                {order.items.map((item, idx) => (
-                                    <View key={idx} style={styles.itemRow}>
-                                        <Text style={styles.itemQty}>{item.quantity}×</Text>
-                                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={styles.itemPrice}>฿{item.subtotal.toFixed(2)}</Text>
+                        <View key={order.id} style={styles.card}>
+                            <TouchableOpacity
+                                onPress={() => setSelectedOrder(order)}>
+                                {/* Card header */}
+                                <View style={styles.cardHeader}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.restaurantName}>{order.restaurant_name}</Text>
+                                        <Text style={styles.dateText}>{formatDate(order.created_at)}</Text>
                                     </View>
-                                ))}
-                            </View>
+                                    <View style={[styles.statusBadge, { backgroundColor: sc.color + '18' }]}>
+                                        <Ionicons name={sc.icon as any} size={14} color={sc.color} />
+                                        <Text style={[styles.statusLabel, { color: sc.color }]}>{sc.label}</Text>
+                                    </View>
+                                </View>
 
-                            {/* Total */}
-                            <View style={styles.totalRow}>
-                                <Text style={styles.totalLabel}>Total</Text>
-                                <Text style={styles.totalValue}>฿{order.total.toFixed(2)}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    );
+                                {/* Items summary */}
+                                <View style={styles.itemsList}>
+                                    {order.items.map((item, idx) => (
+                                        <View key={idx} style={styles.itemRow}>
+                                            <Text style={styles.itemQty}>{item.quantity}×</Text>
+                                            <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                                            <Text style={styles.itemPrice}>฿{item.subtotal.toFixed(2)}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+
+                                {/* Total */}
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.totalLabel}>Total</Text>
+                                    <Text style={styles.totalValue}>฿{order.total.toFixed(2)}</Text>
+                                </View>
+                            </TouchableOpacity>
+                            {order.status.toLowerCase() == "delivered" && (
+                                !reviewedRestaurants[order.restaurant_id] ? (
+                                    <View style={styles.reviewButtonContainer}>
+                                        <TouchableOpacity
+                                            style={styles.reviewButton}
+                                            onPress={() => router.push(`/restaurant/${order.restaurant_id}/createReview`)}
+                                        >
+                                            <Ionicons name="star" size={16} color={Colors.white} />
+                                            <Text style={styles.reviewButtonText}>Write a Review</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                ) : (
+                                    <View style={styles.reviewButtonContainer}>
+                                        <Ionicons name="checkmark-circle" size={18} color={Colors.yellow}></Ionicons>
+                                        <Text style={styles.reviewButtonText}>You have already reviewed this restaurant</Text>
+                                    </View>
+                                )
+                            )}
+                        </View>
+                    )
                 })}
             </ScrollView>
 
@@ -304,6 +344,28 @@ const styles = StyleSheet.create({
         fontSize: FontSize.md,
         fontWeight: '800',
         color: Colors.accent,
+    },
+    reviewButtonContainer: {
+        flexDirection: "row",
+        gap: 10,
+        marginTop: Spacing.md,
+        paddingTop: Spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: Colors.borderLight,
+    },
+    reviewButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: Colors.primary,
+        paddingVertical: 10,
+        borderRadius: BorderRadius.md,
+    },
+    reviewButtonText: {
+        color: Colors.yellow,
+        fontSize: FontSize.sm,
+        fontWeight: '700',
     },
 
     // Modal styles

@@ -4,7 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getMenu, getCart, addToCart, removeFromCart, MenuItem, getRestaurant, Restaurant, Cart } from '@/services/api';
+import {
+    getMenu, getCart, addToCart, removeFromCart,
+    MenuItem, getRestaurant, Restaurant, Cart, Reviews
+    , getReviews
+} from '@/services/api';
 
 function StarRating({ count = 5 }: { count?: number }) {
     return (
@@ -25,6 +29,7 @@ export default function RestaurantDetailScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [cart, setCart] = useState<Cart | null>(null);
     const [busyItems, setBusyItems] = useState<Set<string>>(new Set());
+    const [reviews, setReviews] = useState<Reviews[] | null>(null);
 
     useEffect(() => {
         loadData();
@@ -32,14 +37,16 @@ export default function RestaurantDetailScreen() {
 
     const loadData = async () => {
         try {
-            const [restData, menuData, cartData] = await Promise.all([
+            const [restData, menuData, cartData, reviews] = await Promise.all([
                 getRestaurant(id),
                 getMenu(id),
                 getCart().catch(() => null),
+                getReviews(id)
             ]);
             setRestaurant(restData);
             setMenuItems(menuData);
             setCart(cartData);
+            setReviews(reviews);
         } catch (error) {
             console.error('Failed to load restaurant data:', error);
         } finally {
@@ -139,14 +146,32 @@ export default function RestaurantDetailScreen() {
                                 <Text style={styles.bannerDetail}>{restaurant.address}</Text>
                             </View>
                         )}
-                        <View style={styles.bannerRow}>
-                            <StarRating count={Math.round(restaurant.rating)} />
-                            <View style={[styles.bannerStatusBadge, { backgroundColor: restaurant.is_open ? Colors.success + '20' : Colors.error + '20' }]}>
-                                <View style={[styles.bannerStatusDot, { backgroundColor: restaurant.is_open ? Colors.success : Colors.error }]} />
-                                <Text style={[styles.bannerStatusText, { color: restaurant.is_open ? Colors.success : Colors.error }]}>
-                                    {restaurant.is_open ? 'Open' : 'Closed'}
-                                </Text>
+                        <View style={[styles.bannerRow, { justifyContent: 'space-between', marginTop: Spacing.sm }]}>
+                            <View style={styles.bannerRow}>
+                                <View style={[styles.bannerStatusBadge, { backgroundColor: restaurant.is_open ? Colors.success + '20' : Colors.error + '20', marginLeft: 0 }]}>
+                                    <View style={[styles.bannerStatusDot, { backgroundColor: restaurant.is_open ? Colors.success : Colors.error }]} />
+                                    <Text style={[styles.bannerStatusText, { color: restaurant.is_open ? Colors.success : Colors.error }]}>
+                                        {restaurant.is_open ? 'Open' : 'Closed'}
+                                    </Text>
+                                </View>
                             </View>
+
+                            <TouchableOpacity
+                                style={styles.reviewsButton}
+                                activeOpacity={0.8}
+                                onPress={() => router.push(`/restaurant/${id}/reviews`)}
+                            >
+                                <View style={styles.reviewsButtonLeft}>
+                                    <Text style={styles.reviewsRatingText}>{restaurant.rating.toFixed(1)}</Text>
+                                    <StarRating count={1} />
+                                </View>
+                                <View style={styles.reviewsButtonRight}>
+                                    <Text style={styles.reviewsCountText}>
+                                        {reviews ? reviews.length : 0} reviews
+                                    </Text>
+                                    <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 )}
@@ -215,7 +240,6 @@ export default function RestaurantDetailScreen() {
                 })}
                 <View style={{ height: 100 }} />
             </ScrollView>
-
             {/* Proceed to Order Button */}
             <View style={styles.bottomBar}>
                 <TouchableOpacity style={styles.proceedButton} activeOpacity={0.7} onPress={() => router.push("/cart")}>
@@ -434,5 +458,42 @@ const styles = StyleSheet.create({
         fontSize: FontSize.lg,
         fontWeight: '700',
         color: Colors.accent,
+    },
+    reviewsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.white,
+        borderRadius: BorderRadius.full,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    reviewsButtonLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        borderRightWidth: 1,
+        borderRightColor: Colors.borderLight,
+        paddingRight: Spacing.sm,
+        marginRight: Spacing.sm,
+    },
+    reviewsRatingText: {
+        fontSize: FontSize.md,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    reviewsButtonRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 2,
+    },
+    reviewsCountText: {
+        fontSize: FontSize.sm,
+        fontWeight: '600',
+        color: Colors.primary,
     },
 });

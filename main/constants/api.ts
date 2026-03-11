@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
     menu: (restaurantId: string) => `/api/menu/${restaurantId}`,
     cart: '/api/cart',
     orders: '/api/orders',
+    reviews: '/api/reviews',
     auth: {
         login: '/api/auth/login',
         register: '/api/auth/register',

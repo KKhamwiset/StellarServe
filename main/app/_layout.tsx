@@ -36,6 +36,14 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="restaurant/[id]/reviews"
+          options={{ headerShown: true, title: 'Reviews' }}
+        />
+        <Stack.Screen
+          name="restaurant/[id]/createReview"
+          options={{ headerShown: false, presentation: 'modal' }}
+        />
       </Stack>
       <StatusBar style="dark" />
     </ThemeProvider>

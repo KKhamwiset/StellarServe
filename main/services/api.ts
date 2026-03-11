@@ -157,6 +157,43 @@ export interface Order {
     created_at: string;
 }
 
+export interface Reviews {
+    id: string;
+    user_id: string;
+    user: {
+        id: number;
+        full_name?: string;
+        username: string;
+    }
+    restaurant_id: string;
+    rating: number;
+    comment: string;
+}
+export interface ReviewStat {
+    has_reviewed: boolean
+}
+
+export interface CreateReviewPayload {
+    restaurant_id: string;
+    rating: number;
+    comment: string;
+}
+
+export async function createReviews(payload: CreateReviewPayload): Promise<Reviews> {
+    return request<Reviews>(`${API_ENDPOINTS.reviews}/${payload.restaurant_id}`, {
+        method: 'POST',
+        body: payload as unknown as Record<string, unknown>,
+    });
+}
+
+export async function getReviews(restaurantId: string): Promise<Reviews[]> {
+    return request<Reviews[]>(`${API_ENDPOINTS.reviews}/${restaurantId}`);
+}
+
+export async function checkUserReview(restaurantId: string): Promise<boolean> {
+    return request<boolean>(`${API_ENDPOINTS.reviews}/check/${restaurantId}`);
+}
+
 export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
     return request<Order>(API_ENDPOINTS.orders, {
         method: 'POST',
@@ -177,3 +214,4 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
         method: 'PUT',
     });
 }
+

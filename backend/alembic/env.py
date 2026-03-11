@@ -7,6 +7,7 @@ import app.models.user
 import app.models.cart
 import app.models.order
 import app.models.restaurant
+import app.models.reviews
 from alembic import context
 
 # this is the Alembic Config object, which provides
