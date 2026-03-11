@@ -5,13 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
+import { User, Restaurant, getRestaurants } from '@/services/api'
 
-const FEATURED = [
-  { id: 'rest-001', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-  { id: 'rest-002', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-  { id: 'rest-003', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-  { id: 'rest-004', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', time: '3 min', distance: '1.1 km', rating: 5 },
-];
 
 const QUICK_CATEGORIES = [
   { icon: 'cafe-outline' as const, label: 'Drink' },
@@ -41,11 +36,12 @@ function StarRating({ count = 5 }: { count?: number }) {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [featured, setFeatured] = useState<Restaurant[] | null>(null);
 
   useEffect(() => {
-    const loadUser = async () => {
+    const init = async () => {
       try {
         const userData = await AsyncStorage.getItem('user');
         console.log('user data:', userData);
@@ -54,17 +50,26 @@ export default function HomeScreen() {
         }
       } catch (error) {
         console.error('Failed to load user:', error);
-      } finally {
-        setLoading(false);
       }
+
+      try {
+        console.log('Fetching restaurants...');
+        const restaurants = await getRestaurants();
+        console.log('Restaurants loaded:', restaurants.length, restaurants);
+        setFeatured(restaurants);
+      } catch (error) {
+        console.error('Failed to load restaurants:', error);
+      }
+
+      setLoading(false);
     };
-    loadUser();
+    init();
   }, []);
 
   const role = user?.role;
   const isSeller = role === 'seller';
 
-  // Redirect sellers to the dashboard tab
+
   useEffect(() => {
     if (!loading && isSeller) {
       router.replace('/(tabs)/dashboard');
@@ -165,7 +170,7 @@ export default function HomeScreen() {
               <Text style={styles.viewAll}>View all</Text>
             </TouchableOpacity>
           </View>
-          {FEATURED.map((item) => (
+          {featured?.map((item) => (
             <TouchableOpacity
               key={item.id}
               style={styles.restaurantCard}
@@ -183,7 +188,7 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.restaurantMeta}>
                   <Ionicons name="time-outline" size={13} color={Colors.textMuted} />
-                  <Text style={styles.restaurantTime}>{item.time} · {item.distance}</Text>
+                  <Text style={styles.restaurantTime}>{item.opening_time} - {item.closing_time}</Text>
                 </View>
                 <StarRating count={item.rating} />
               </View>

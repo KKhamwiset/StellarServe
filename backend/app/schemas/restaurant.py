@@ -4,15 +4,15 @@ from datetime import datetime
 
 class RestaurantBase(BaseModel):
     name: str
-    description: str
-    cuisine_type: str
-    address: str
-    phone: str
+    description: Optional[str] = None
+    cuisine_type: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
     image_url: Optional[str] = None
     rating: float = 0.0
     is_open: bool = True
-    opening_time: str
-    closing_time: str
+    opening_time: Optional[str] = None
+    closing_time: Optional[str] = None
 
 class RestaurantCreate(RestaurantBase):
     pass

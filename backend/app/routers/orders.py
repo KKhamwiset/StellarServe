@@ -93,6 +93,25 @@ async def list_orders(
     return response_list
 
 
+@router.get("/seller", response_model=List[OrderResponse])
+async def list_seller_orders(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List all orders for the current seller's restaurant."""
+    restaurant = db.query(Restaurant).filter(Restaurant.owner_id == current_user.id).first()
+    if not restaurant:
+        raise HTTPException(status_code=404, detail="No restaurant found for this seller")
+
+    orders = db.query(Order).filter(Order.restaurant_id == restaurant.id).order_by(Order.created_at.desc()).all()
+
+    response_list = []
+    for order in orders:
+        response_list.append(_build_order_response(order, None, db))
+
+    return response_list
+
+
 @router.get("/{order_id}", response_model=OrderResponse)
 async def get_order(
     order_id: str,

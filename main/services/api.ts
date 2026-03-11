@@ -167,3 +167,7 @@ export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
 export async function getOrders(): Promise<Order[]> {
     return request<Order[]>(API_ENDPOINTS.orders);
 }
+
+export async function getSellerOrders(): Promise<Order[]> {
+    return request<Order[]>(`${API_ENDPOINTS.orders}/seller`);
+}
