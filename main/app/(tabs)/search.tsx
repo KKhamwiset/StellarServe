@@ -5,16 +5,8 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { getRestaurants, Restaurant } from '@/services/api';
+import { StarRating } from '@/components/start-rating';
 
-function StarRating({ count = 5 }: { count?: number }) {
-    return (
-        <View style={{ flexDirection: 'row', gap: 2 }}>
-            {Array.from({ length: Math.round(count) }).map((_, i) => (
-                <Ionicons key={i} name="star" size={14} color={Colors.star} />
-            ))}
-        </View>
-    );
-}
 
 export default function SearchScreen() {
     const [query, setQuery] = useState('');

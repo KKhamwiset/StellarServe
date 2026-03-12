@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from app.schemas.user import UserSummary
 
 class ReviewBase(BaseModel):
     rating: int
@@ -12,7 +13,7 @@ class ReviewCreate(ReviewBase):
 
 class ReviewResponse(ReviewBase):
     id: int
-    user_id: int
+    user : UserSummary
     restaurant_id: str
     order_id: str
     created_at: datetime

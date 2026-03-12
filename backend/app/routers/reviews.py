@@ -13,6 +13,23 @@ from app.schemas.reviews import ReviewCreate, ReviewResponse
 
 router = APIRouter()
 
+
+@router.get("/check")
+async def check_user_review(
+    order: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Check if the currently logged-in user has already reviewed this order"""
+    
+    existing_review = db.query(Review).filter(
+        Review.order_id == order,
+        Review.user_id == current_user.id
+    ).first()
+
+    return {"has_reviewed": existing_review is not None}
+
+
 @router.post("/{restaurant_id}", response_model=ReviewCreate)
 async def create_review(
     restaurant_id: str,
@@ -48,18 +65,3 @@ async def get_reviews(restaurant_id: str, db: Session = Depends(get_db)):
     reviews = db.query(Review).filter(Review.restaurant_id == restaurant_id).all()
 
     return reviews
-
-@router.get("/check")
-async def check_user_review(
-    order: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Check if the currently logged-in user has already reviewed this order"""
-    
-    existing_review = db.query(Review).filter(
-        Review.order_id == order,
-        Review.user_id == current_user.id
-    ).first()
-
-    return {"has_reviewed": existing_review is not None}
