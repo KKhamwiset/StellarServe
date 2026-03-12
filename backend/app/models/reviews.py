@@ -9,6 +9,7 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     restaurant_id = Column(String, ForeignKey("restaurants.id"), nullable=False)
+    order_id = Column(String,ForeignKey('orders.id'),unique=True,nullable=False)
     rating = Column(Integer, nullable=False)
     comment = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -16,3 +17,4 @@ class Review(Base):
     # Relationships
     user = relationship("User")
     restaurant = relationship("Restaurant")
+    order = relationship("Order")

@@ -28,7 +28,7 @@ function StarRating({ count = 5, size = 16, interactive = false, onRatingChange 
 }
 
 export default function CreateReviewScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const { id, order } = useLocalSearchParams<{ id: string, order: string }>();
     const router = useRouter();
 
     // Form state
@@ -46,6 +46,7 @@ export default function CreateReviewScreen() {
         try {
             await createReviews({
                 restaurant_id: id,
+                order_id: order,
                 rating: rating,
                 comment: comment.trim()
             });

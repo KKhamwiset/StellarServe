@@ -158,13 +158,25 @@ export interface Order {
 }
 
 export interface Reviews {
-    id: string;
-    user_id: string;
+    id: number;
+    user_id: number;
+
     user: {
         id: number;
         full_name?: string;
         username: string;
-    }
+    };
+
+    order: {
+        id: string;
+        items: Array<{
+            quantity: number;
+            menu_item: {
+                name: string;
+            };
+        }>;
+    };
+
     restaurant_id: string;
     rating: number;
     comment: string;
@@ -176,11 +188,12 @@ export interface ReviewStat {
 export interface CreateReviewPayload {
     restaurant_id: string;
     rating: number;
+    order_id: string;
     comment: string;
 }
 
 export async function createReviews(payload: CreateReviewPayload): Promise<Reviews> {
-    return request<Reviews>(`${API_ENDPOINTS.reviews}/${payload.restaurant_id}`, {
+    return request<Reviews>(`${API_ENDPOINTS.reviews}/${payload.restaurant_id}?order=${payload.order_id}`, {
         method: 'POST',
         body: payload as unknown as Record<string, unknown>,
     });
@@ -190,8 +203,8 @@ export async function getReviews(restaurantId: string): Promise<Reviews[]> {
     return request<Reviews[]>(`${API_ENDPOINTS.reviews}/${restaurantId}`);
 }
 
-export async function checkUserReview(restaurantId: string): Promise<boolean> {
-    return request<boolean>(`${API_ENDPOINTS.reviews}/check/${restaurantId}`);
+export async function checkUserReview(order_id: string): Promise<boolean> {
+    return request<boolean>(`${API_ENDPOINTS.reviews}/check?order=${order_id}`);
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<Order> {

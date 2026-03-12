@@ -7,15 +7,14 @@ class ReviewBase(BaseModel):
     comment: Optional[str] = None
 
 class ReviewCreate(ReviewBase):
-    restaurant_id: str
+    pass
 
-from app.schemas.user import UserResponse
 
 class ReviewResponse(ReviewBase):
     id: int
     user_id: int
-    user: UserResponse
     restaurant_id: str
+    order_id: str
     created_at: datetime
     updated_at: datetime
     class Config:

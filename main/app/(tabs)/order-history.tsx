@@ -33,14 +33,14 @@ export default function OrderHistoryScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [reviewedRestaurants, setReviewedRestaurants] = useState<Record<string, boolean>>({});
+    const [reviewedOrder, setReviewedOrder] = useState<Record<string, boolean>>({});
 
     const load = async () => {
         try {
             const data = await getOrders();
-            const uniqueRestaurantIds = [...new Set(data.map(order => order.restaurant_id))];
+            const uniqueOrder = [...new Set(data.map(order => order.id))];
             const reviewStatuses = await Promise.all(
-                uniqueRestaurantIds.map(async (id) => {
+                uniqueOrder.map(async (id) => {
                     try {
                         const res = await checkUserReview(id) as unknown as ReviewStat;
                         return { id, hasReviewed: res.has_reviewed };
@@ -55,7 +55,7 @@ export default function OrderHistoryScreen() {
                 statusMap[status.id] = status.hasReviewed;
             });
 
-            setReviewedRestaurants(statusMap);
+            setReviewedOrder(statusMap);
             setOrders(data);
         } catch (e) {
             console.error('Failed to load orders:', e);
@@ -138,11 +138,11 @@ export default function OrderHistoryScreen() {
                                 </View>
                             </TouchableOpacity>
                             {order.status.toLowerCase() == "delivered" && (
-                                !reviewedRestaurants[order.restaurant_id] ? (
+                                !reviewedOrder[order.id] ? (
                                     <View style={styles.reviewButtonContainer}>
                                         <TouchableOpacity
                                             style={styles.reviewButton}
-                                            onPress={() => router.push(`/restaurant/${order.restaurant_id}/createReview`)}
+                                            onPress={() => router.push(`/restaurant/${order.restaurant_id}/createReview?order=${order.id}`)}
                                         >
                                             <Ionicons name="star" size={16} color={Colors.white} />
                                             <Text style={styles.reviewButtonText}>Write a Review</Text>
@@ -151,7 +151,7 @@ export default function OrderHistoryScreen() {
                                 ) : (
                                     <View style={styles.reviewButtonContainer}>
                                         <Ionicons name="checkmark-circle" size={18} color={Colors.yellow}></Ionicons>
-                                        <Text style={styles.reviewButtonText}>You have already reviewed this restaurant</Text>
+                                        <Text style={styles.reviewButtonText}>You have already reviewed this order</Text>
                                     </View>
                                 )
                             )}

@@ -18,3 +18,8 @@ class MenuItemResponse(MenuItemBase):
 
     class Config:
         from_attributes = True
+
+class MenuItemSummary(BaseModel):
+    name : str
+    class Config:
+        from_attributes = True

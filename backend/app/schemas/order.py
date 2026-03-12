@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from app.schemas.menu import MenuItemSummary
 
 class OrderItemBase(BaseModel):
     menu_item_id: str
@@ -8,6 +9,16 @@ class OrderItemBase(BaseModel):
 
 class OrderItemCreate(OrderItemBase):
     pass
+
+class OrderItemSummary(OrderItemBase):
+    menu_item: MenuItemSummary
+    class Config:
+        from_attributes = True
+
+class OrderSummaryForReview(BaseModel):
+    items : List[OrderItemSummary]
+    class Config:
+        from_attributes = True
 
 class OrderItemResponse(OrderItemBase):
     name: str

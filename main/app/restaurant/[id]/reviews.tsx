@@ -5,7 +5,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { getReviews, getRestaurant, Reviews } from '@/services/api';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 
 function StarRating({ count = 5, size = 16, interactive = false, onRatingChange }: { count?: number, size?: number, interactive?: boolean, onRatingChange?: (rating: number) => void }) {
     return (
@@ -29,7 +28,7 @@ function StarRating({ count = 5, size = 16, interactive = false, onRatingChange 
 }
 
 export default function RestaurantReviewsScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const { id, order } = useLocalSearchParams<{ id: string, order: string }>();
     const router = useRouter();
 
     const [reviews, setReviews] = useState<Reviews[]>([]);
@@ -113,9 +112,20 @@ export default function RestaurantReviewsScreen() {
                                         <View style={styles.avatarPlaceholder}>
                                             <Ionicons name="person" size={16} color={Colors.white} />
                                         </View>
-                                        <Text style={styles.reviewUserName}>
-                                            {review.user?.full_name || review.user?.username || `User ${review.user_id}`}
-                                        </Text>
+                                        <View>
+                                            <Text style={styles.reviewUserName}>
+                                                {review.user?.full_name || review.user?.username || `User ${review.user_id}`}
+                                            </Text>
+                                            <View style={styles.orderedItemsContainer}>
+                                                {review.order?.items?.map((item, index) => (
+                                                    <View key={index} style={styles.itemBadge}>
+                                                        <Text style={styles.itemBadgeText}>
+                                                            {item.menu_item.name} x{item.quantity}
+                                                        </Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        </View>
                                     </View>
                                     <StarRating count={review.rating} size={14} />
                                 </View>
@@ -245,6 +255,26 @@ const styles = StyleSheet.create({
         fontSize: FontSize.md,
         fontWeight: '600',
         color: Colors.text,
+    },
+    orderedItemsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: 4,
+    },
+    itemBadge: {
+        backgroundColor: Colors.yellow_background,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: Colors.accent,
+    },
+    itemBadgeText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: Colors.primary,
     },
     reviewComment: {
         fontSize: FontSize.md,

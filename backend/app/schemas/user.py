@@ -13,6 +13,12 @@ class UserCreate(UserBase):
     password: str
     restaurant_name: Optional[str] = None
 
+class UserSummary(BaseModel):
+    id: int
+    full_name: str
+    class Config:
+        from_attributes = True
+
 class UserLogin(BaseModel):
     identifier: str
     password: str
