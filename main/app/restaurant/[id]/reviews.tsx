@@ -28,7 +28,7 @@ function StarRating({ count = 5, size = 16, interactive = false, onRatingChange 
 }
 
 export default function RestaurantReviewsScreen() {
-    const { id, order } = useLocalSearchParams<{ id: string, order: string }>();
+    const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
 
     const [reviews, setReviews] = useState<Reviews[]>([]);

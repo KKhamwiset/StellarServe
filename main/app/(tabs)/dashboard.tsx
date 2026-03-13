@@ -3,8 +3,35 @@ import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
+import { useState, useEffect } from 'react';
+import { Restaurant, getMyRestaurant, getRestaurantOrders, getRestaurantMenu } from '@/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DashboardScreen() {
+    const [restaurantData, setRestaurantData] = useState<Restaurant | null>(null);
+    const [orderData, setOrderData] = useState<{ orders_count: number; income: number } | null>(null);
+    const [menuData, setMenuData] = useState<{ items: number } | null>(null);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        const init = async () => {
+            try {
+                const restaurant = await getMyRestaurant();
+                setRestaurantData(restaurant);
+                const orderData = await getRestaurantOrders(restaurant.id);
+
+                setOrderData(orderData);
+                const menuData = await getRestaurantMenu(restaurant.id);
+
+                setMenuData(menuData);
+            } catch (error) {
+                console.error('Failed to load restaurants:', error);
+            }
+
+            setLoading(false);
+        };
+        init();
+    }, []);
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <View style={styles.header}>
@@ -15,22 +42,22 @@ export default function DashboardScreen() {
                 <View style={styles.statsGrid}>
                     <View style={styles.statCard}>
                         <Ionicons name="receipt-outline" size={28} color={Colors.primary} />
-                        <Text style={styles.statValue}>0</Text>
+                        <Text style={styles.statValue}>{orderData?.orders_count}</Text>
                         <Text style={styles.statLabel}>Orders Today</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Ionicons name="cash-outline" size={28} color={Colors.accent} />
-                        <Text style={styles.statValue}>฿0</Text>
+                        <Text style={styles.statValue}>฿{orderData?.income}</Text>
                         <Text style={styles.statLabel}>Revenue</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Ionicons name="fast-food-outline" size={28} color={Colors.primary} />
-                        <Text style={styles.statValue}>0</Text>
+                        <Text style={styles.statValue}>{menuData?.items}</Text>
                         <Text style={styles.statLabel}>Menu Items</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Ionicons name="star-outline" size={28} color={Colors.star} />
-                        <Text style={styles.statValue}>0.0</Text>
+                        <Text style={styles.statValue}>{restaurantData?.rating}</Text>
                         <Text style={styles.statLabel}>Rating</Text>
                     </View>
                 </View>

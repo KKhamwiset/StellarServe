@@ -6,7 +6,7 @@ import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
 import { User, Restaurant, getRestaurants } from '@/services/api'
-
+import { StarRating } from '@/components/start-rating';
 
 const QUICK_CATEGORIES = [
   { icon: 'cafe-outline' as const, label: 'Drink' },
@@ -24,15 +24,6 @@ const CATEGORY_TAGS = [
   { label: 'Noodle', bg: Colors.accent, text: Colors.primary },
 ];
 
-function StarRating({ count = 5 }: { count?: number }) {
-  return (
-    <View style={{ flexDirection: 'row', gap: 2 }}>
-      {Array.from({ length: count }).map((_, i) => (
-        <Ionicons key={i} name="star" size={14} color={Colors.star} />
-      ))}
-    </View>
-  );
-}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -44,7 +35,6 @@ export default function HomeScreen() {
     const init = async () => {
       try {
         const userData = await AsyncStorage.getItem('user');
-        console.log('user data:', userData);
         if (userData) {
           setUser(JSON.parse(userData));
         }

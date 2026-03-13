@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { ModalProps } from '@/components/ui/modal';
-import { useState, useEffect, useCallback } from 'react';
-import { Picker } from '@react-native-picker/picker';
+import { MenuModal } from '@/components/ui/menu-modal';
+import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
 import { MenuItem, getMenu } from '@/services/api';
@@ -14,11 +13,9 @@ export default function MenuManagerScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
     const [restaurantId, setRestaurantId] = useState<string | null>(null);
+    const [menuState, setMenuState] = useState("Add")
     const [loading, setLoading] = useState(false);
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [price, setPrice] = useState('');
-    const [category, setCategory] = useState('');
+    const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
 
     useEffect(() => {
         const fetchMyRestaurant = async () => {
@@ -38,7 +35,7 @@ export default function MenuManagerScreen() {
         fetchMyRestaurant();
     }, []);
 
-    const loadMenu = useCallback(async () => {
+    const loadMenu = async () => {
         if (!restaurantId) return;
         try {
             const items = await getMenu(restaurantId);
@@ -46,84 +43,35 @@ export default function MenuManagerScreen() {
         } catch (error) {
             console.error('Failed to load menu:', error);
         }
-    }, [restaurantId]);
-
+    };
     useEffect(() => {
         loadMenu();
-    }, [loadMenu]);
-
-    const resetForm = () => {
-        setName('');
-        setDescription('');
-        setPrice('');
-        setCategory('');
-    };
-
-    const handleAddItem = async () => {
-        if (!name.trim() || !price.trim()) {
-            Alert.alert('Missing fields', 'Name and price are required.');
-            return;
-        }
-
-        if (!restaurantId) {
-            Alert.alert('Error', 'Could not find your restaurant.');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const token = await AsyncStorage.getItem('userToken');
-            const payload = {
-                name: name.trim(),
-                description: description.trim(),
-                price: parseFloat(price),
-                category: category || 'Main',
-                restaurant_id: restaurantId,
-            };
-
-            const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.menu(restaurantId)}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.detail || 'Failed to add menu item');
-            }
-
-            resetForm();
-            setModalVisible(false);
-            await loadMenu();
-        } catch (err: any) {
-            console.error('Failed to add menu item:', err);
-            Alert.alert('Error', err.message || 'Something went wrong.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [restaurantId]);
 
     const renderMenuItem = ({ item }: { item: MenuItem }) => (
-        <View style={styles.menuCard}>
-            <View style={styles.menuCardInfo}>
-                <Text style={styles.menuCardName}>{item.name}</Text>
-                {item.description ? (
-                    <Text style={styles.menuCardDesc} numberOfLines={2}>{item.description}</Text>
-                ) : null}
-                <View style={styles.menuCardMeta}>
-                    <Text style={styles.menuCardPrice}>${item.price.toFixed(2)}</Text>
-                    {item.category ? (
-                        <View style={styles.categoryBadge}>
-                            <Text style={styles.categoryBadgeText}>{item.category}</Text>
-                        </View>
+        <TouchableOpacity onPress={() => {
+            setModalVisible(true);
+            setSelectedMenuItem(item);
+            setMenuState("Edit");
+        }}>
+            <View style={styles.menuCard}>
+                <View style={styles.menuCardInfo}>
+                    <Text style={styles.menuCardName}>{item.name}</Text>
+                    {item.description ? (
+                        <Text style={styles.menuCardDesc} numberOfLines={2}>{item.description}</Text>
                     ) : null}
+                    <View style={styles.menuCardMeta}>
+                        <Text style={styles.menuCardPrice}>${item.price.toFixed(2)}</Text>
+                        {item.category ? (
+                            <View style={styles.categoryBadge}>
+                                <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                            </View>
+                        ) : null}
+                    </View>
                 </View>
+                <View style={[styles.availabilityDot, { backgroundColor: item.is_available ? Colors.success : Colors.error }]} />
             </View>
-            <View style={[styles.availabilityDot, { backgroundColor: item.is_available ? Colors.success : Colors.error }]} />
-        </View>
+        </TouchableOpacity>
     );
 
     return (
@@ -133,7 +81,11 @@ export default function MenuManagerScreen() {
                 <TouchableOpacity
                     style={styles.addButton}
                     activeOpacity={0.7}
-                    onPress={() => setModalVisible(true)}
+                    onPress={() => {
+                        setModalVisible(true);
+                        setSelectedMenuItem(null);
+                        setMenuState("Add");
+                    }}
                 >
                     <Ionicons name="add" size={22} color={Colors.white} />
                     <Text style={styles.addButtonText}>Add Menu</Text>
@@ -159,71 +111,14 @@ export default function MenuManagerScreen() {
             )}
 
             {modalVisible && (
-                <ModalProps title="Add Menu Item" onClose={() => setModalVisible(false)}>
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Name *</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter item name"
-                            placeholderTextColor={Colors.textMuted}
-                            value={name}
-                            onChangeText={setName}
-                        />
-                    </View>
-
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Price *</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="0.00"
-                            placeholderTextColor={Colors.textMuted}
-                            keyboardType="numeric"
-                            value={price}
-                            onChangeText={setPrice}
-                        />
-                    </View>
-
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Description</Text>
-                        <TextInput
-                            style={[styles.input, styles.textArea]}
-                            placeholder="What is this food?"
-                            placeholderTextColor={Colors.textMuted}
-                            multiline
-                            numberOfLines={3}
-                            value={description}
-                            onChangeText={setDescription}
-                        />
-                    </View>
-
-                    <View style={styles.formGroup}>
-                        <Text style={styles.label}>Category</Text>
-                        <View style={styles.pickerContainer}>
-                            <Picker
-                                selectedValue={category}
-                                onValueChange={(value) => setCategory(value)}
-                                style={styles.picker}
-                            >
-                                <Picker.Item label="Select category" value="" />
-                                <Picker.Item label="Main" value="Main" />
-                                <Picker.Item label="Drinks" value="Drinks" />
-                                <Picker.Item label="Dessert" value="Dessert" />
-                                <Picker.Item label="Snack" value="Snack" />
-                            </Picker>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.submitButton, loading && { opacity: 0.6 }]}
-                        activeOpacity={0.7}
-                        onPress={handleAddItem}
-                        disabled={loading}
-                    >
-                        <Text style={styles.submitButtonText}>
-                            {loading ? 'Adding...' : 'Add Item'}
-                        </Text>
-                    </TouchableOpacity>
-                </ModalProps>
+                <MenuModal
+                    title={`${menuState} menu`}
+                    action={`${menuState}`}
+                    loadMenu={loadMenu}
+                    menu_data={selectedMenuItem}
+                    restaurantID={restaurantId}
+                    onClose={() => setModalVisible(false)}
+                />
             )}
         </SafeAreaView>
     );

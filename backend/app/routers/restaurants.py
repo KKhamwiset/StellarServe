@@ -3,8 +3,13 @@ from app.models.restaurant import Restaurant
 from app.models.user import User
 from app.routers.auth import get_current_user
 from app.database import get_db
+from app.models.restaurant import MenuItem
+from app.models.order import Order
+from app.schemas import MenuItemResponse, OrderResponse
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
+import datetime
 
 router = APIRouter()
 
@@ -24,10 +29,37 @@ async def get_my_restaurant(current_user: User = Depends(get_current_user), db: 
     return restaurant
 
 @router.get("/{restaurant_id}", response_model=RestaurantResponse)
-async def get_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
+async def get_restaurant(restaurant_id: str, db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)):
     """Get a specific restaurant by ID."""
     restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
     return restaurant
 
+@router.get("/{restaurant_id}/menu")
+async def get_restaurant_menu(restaurant_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = db.query(
+        func.count(MenuItem.id)
+    ).filter(
+        MenuItem.restaurant_id == restaurant_id
+    ).first()
+    return {"items": result[0]}
+
+@router.get("/{restaurant_id}/order")
+async def get_restaurant_orders(
+    restaurant_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = db.query(
+        func.count(Order.id),
+        func.sum(Order.total_price)
+    ).filter(
+        Order.restaurant_id == restaurant_id
+    ).first()
+
+    return {
+        "orders_count": result[0],
+        "income": result[1] or 0
+    }

@@ -71,6 +71,15 @@ export async function getRestaurant(id: string): Promise<Restaurant> {
     return request<Restaurant>(`${API_ENDPOINTS.restaurants}/${id}`);
 }
 
+export async function getMyRestaurant(): Promise<Restaurant> {
+    return request<Restaurant>(`${API_ENDPOINTS.restaurants}/mine`);
+}
+export async function getRestaurantOrders(restaurantId: string): Promise<{ orders_count: number; income: number }> {
+    return request<{ orders_count: number; income: number }>(`${API_ENDPOINTS.restaurants}/${restaurantId}/order`);
+}
+export async function getRestaurantMenu(restaurantId: string): Promise<{ items: number }> {
+    return request<{ items: number }>(`${API_ENDPOINTS.restaurants}/${restaurantId}/menu`);
+}
 // ─── Menu API ───────────────────────────────────────────
 export interface MenuItem {
     id: string;

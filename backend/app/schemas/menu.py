@@ -12,6 +12,7 @@ class MenuItemBase(BaseModel):
 class MenuItemCreate(MenuItemBase):
     restaurant_id: str
 
+
 class MenuItemResponse(MenuItemBase):
     id: str
     restaurant_id: str
