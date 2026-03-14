@@ -38,13 +38,17 @@ async def get_restaurant(restaurant_id: str, db: Session = Depends(get_db),
     return restaurant
 
 @router.get("/{restaurant_id}/menu")
-async def get_restaurant_menu(restaurant_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    result = db.query(
-        func.count(MenuItem.id)
-    ).filter(
-        MenuItem.restaurant_id == restaurant_id
-    ).first()
-    return {"items": result[0]}
+async def get_restaurant_menu(
+    restaurant_id: str, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    """Retrieve the total count of items in the restaurant's menu."""
+    if not db.query(Restaurant.id).filter(Restaurant.id == restaurant_id).first():
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+    item_count = db.query(func.count(MenuItem.id)).filter(MenuItem.restaurant_id == restaurant_id).scalar()
+    
+    return {"items": item_count or 0}
 
 @router.get("/{restaurant_id}/order")
 async def get_restaurant_orders(
@@ -56,7 +60,8 @@ async def get_restaurant_orders(
         func.count(Order.id),
         func.sum(Order.total_price)
     ).filter(
-        Order.restaurant_id == restaurant_id
+        Order.restaurant_id == restaurant_id,
+        func.date(Order.created_at) == datetime.date.today()
     ).first()
 
     return {

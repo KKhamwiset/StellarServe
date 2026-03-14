@@ -25,6 +25,7 @@ class Restaurant(Base):
     # Relationships
     owner = relationship("User", back_populates="restaurants")
     menu_items = relationship("MenuItem", back_populates="restaurant")
+    favorites = relationship("Favorite", back_populates="restaurant")
 
 
 class MenuItem(Base):
