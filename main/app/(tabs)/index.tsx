@@ -5,8 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
-import { User, Restaurant, getRestaurants } from '@/services/api'
-import { StarRating } from '@/components/start-rating';
+import { getRestaurants } from '@/services/api'
+import { User, Restaurant } from '@/types/api'
+import { StarRating } from '@/components/ui/StarRating';
 
 const QUICK_CATEGORIES = [
   { icon: 'cafe-outline' as const, label: 'Drink' },
@@ -178,7 +179,7 @@ export default function HomeScreen() {
                   <Ionicons name="time-outline" size={13} color={Colors.textMuted} />
                   <Text style={styles.restaurantTime}>{item.opening_time} - {item.closing_time}</Text>
                 </View>
-                <StarRating count={item.rating} />
+                <StarRating rating={item.rating} />
               </View>
             </TouchableOpacity>
           ))}

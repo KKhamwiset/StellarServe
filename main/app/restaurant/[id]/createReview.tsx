@@ -6,26 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { createReviews } from '@/services/api';
 
-function StarRating({ count = 5, size = 16, interactive = false, onRatingChange }: { count?: number, size?: number, interactive?: boolean, onRatingChange?: (rating: number) => void }) {
-    return (
-        <View style={{ flexDirection: 'row', gap: 2 }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-                <TouchableOpacity
-                    key={i}
-                    activeOpacity={interactive ? 0.7 : 1}
-                    onPress={() => interactive && onRatingChange && onRatingChange(i + 1)}
-                    disabled={!interactive}
-                >
-                    <Ionicons
-                        name={i < count ? "star" : "star-outline"}
-                        size={size}
-                        color={Colors.star}
-                    />
-                </TouchableOpacity>
-            ))}
-        </View>
-    );
-}
+import { StarRating } from '@/components/ui/StarRating';
 
 export default function CreateReviewScreen() {
     const { id, order } = useLocalSearchParams<{ id: string, order: string }>();
@@ -82,7 +63,7 @@ export default function CreateReviewScreen() {
                     <View style={styles.ratingInputContainer}>
                         <Text style={styles.ratingInputLabel}>Tap to rate your experience:</Text>
                         <StarRating
-                            count={rating}
+                            rating={rating}
                             size={40}
                             interactive={true}
                             onRatingChange={setRating}

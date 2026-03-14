@@ -4,8 +4,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getRestaurants, Restaurant } from '@/services/api';
-import { StarRating } from '@/components/start-rating';
+import { getRestaurants } from '@/services/api';
+import { Restaurant } from '@/types/api';
+import { StarRating } from '@/components/ui/StarRating';
 
 
 export default function SearchScreen() {
@@ -117,7 +118,7 @@ export default function SearchScreen() {
                                     </View>
                                 )}
                                 <View style={styles.resultBottom}>
-                                    <StarRating count={item.rating} />
+                                    <StarRating rating={item.rating} />
                                     <View style={[styles.statusBadge, { backgroundColor: item.is_open ? Colors.success + '20' : Colors.error + '20' }]}>
                                         <View style={[styles.statusDot, { backgroundColor: item.is_open ? Colors.success : Colors.error }]} />
                                         <Text style={[styles.statusText, { color: item.is_open ? Colors.success : Colors.error }]}>

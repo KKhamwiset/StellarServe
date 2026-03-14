@@ -1,11 +1,10 @@
-from app.routers import reviews
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from functools import wraps
 
 from app.config import get_settings
-from app.routers import auth, restaurants, menu, orders, cart , reviews
+from app.routers import auth, restaurants, menu, orders, cart, reviews, favorite
 
 settings = get_settings()
 
@@ -35,6 +34,7 @@ app.include_router(menu.router, prefix="/api/menu", tags=["Menu"])
 app.include_router(orders.router, prefix="/api/orders", tags=["Orders"])
 app.include_router(cart.router, prefix="/api/cart", tags=["Cart"])
 app.include_router(reviews.router, prefix="/api/reviews", tags=["Reviews"])
+app.include_router(favorite.router, prefix="/api/favorites", tags=["Favorites"])
 
 @app.get("/", tags=["Health"])
 async def root():

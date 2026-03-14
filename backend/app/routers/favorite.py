@@ -1,9 +1,10 @@
 from fastapi import APIRouter , Depends , HTTPException , status
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.models.user import Favorite
-from app.schemas.favorite import FavoriteResponse, FavoriteCreate
+from app.models.favorite import Favorite
+from app.schemas.favorite import FavoriteResponse , FavoriteCreate
 from app.routers.auth import get_current_user
 
 router = APIRouter()
@@ -14,9 +15,28 @@ async def get_favorites(current_user: User = Depends(get_current_user), db: Sess
     favorites = db.query(Favorite).filter(Favorite.user_id == current_user.id).all()
     return favorites
 
-@router.post("/", response_model=FavoriteResponse)
-async def add_favorite(favorite_in: FavoriteCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    favorite = Favorite(**favorite_in.dict(), user_id=current_user.id)
+
+
+@router.get("/{restaurant_id}", response_model=Optional[FavoriteResponse])
+async def get_favorite(
+    restaurant_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    favorite = db.query(Favorite).filter(
+        Favorite.restaurant_id == restaurant_id,
+        Favorite.user_id == current_user.id
+    ).first()
+
+    return favorite
+
+
+@router.post("/{restaurant_id}", response_model=FavoriteCreate)
+async def add_favorite(restaurant_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    favorite = Favorite(
+        restaurant_id=restaurant_id,
+        user_id=current_user.id
+    )
     db.add(favorite)
     db.commit()
     db.refresh(favorite)
@@ -29,7 +49,6 @@ async def remove_favorite(favorite_id: int, current_user: User = Depends(get_cur
         raise HTTPException(status_code=404, detail="Favorite not found")
     db.delete(favorite)
     db.commit()
-    return
 
 @router.get("/check/{restaurant_id}", response_model=bool)
 async def check_favorite(restaurant_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

@@ -20,4 +20,5 @@ export const API_ENDPOINTS = {
         me: '/api/auth/me',
         logout: '/api/auth/logout',
     },
+    favorites: '/api/favorites',
 };

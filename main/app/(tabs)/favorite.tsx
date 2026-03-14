@@ -2,43 +2,43 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-
-const FAVORITES = [
-    { id: 'fav-1', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', rating: 5 },
-    { id: 'fav-2', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', rating: 5 },
-    { id: 'fav-3', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', rating: 5 },
-    { id: 'fav-4', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', rating: 5 },
-    { id: 'fav-5', name: 'Restaurant', address: '13 th Street, 46 W 12th St, NY', rating: 5 },
-];
-
-function StarRating({ count = 5 }: { count?: number }) {
-    return (
-        <View style={{ flexDirection: 'row', gap: 2 }}>
-            {Array.from({ length: count }).map((_, i) => (
-                <Ionicons key={i} name="star" size={16} color={Colors.star} />
-            ))}
-        </View>
-    );
-}
+import { getFavorites } from '@/services/api';
+import { useState, useEffect } from 'react';
+import { Favorite } from '@/types/api';
+import { StarRating } from '@/components/ui/StarRating';
 
 export default function FavoriteScreen() {
+
+    const [favoriteData, setFavoriteData] = useState<Favorite[]>([]);
+
+    useEffect(() => {
+        const fetchFavorites = async () => {
+            const favorites = await getFavorites();
+            setFavoriteData(favorites);
+        };
+        fetchFavorites();
+    }, []);
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
                 <Text style={styles.title}>Favorite restaurant</Text>
 
-                {FAVORITES.map((item) => (
+                {favoriteData.map((item) => (
                     <View key={item.id} style={styles.card}>
                         <View style={styles.cardImage}>
                             <Ionicons name="restaurant-outline" size={28} color={Colors.textMuted} />
                         </View>
                         <View style={styles.cardInfo}>
-                            <Text style={styles.cardName}>{item.name}</Text>
+                            <Text style={styles.cardName}>{item.restaurant.name}</Text>
                             <View style={styles.cardMeta}>
                                 <Ionicons name="location-outline" size={14} color={Colors.primary} />
-                                <Text style={styles.cardAddress}>{item.address}</Text>
+                                <Text style={styles.cardAddress}>{item.restaurant.address}</Text>
                             </View>
-                            <StarRating count={item.rating} />
+                            <StarRating rating={item.restaurant.rating} />
+                        </View>
+                        <View style={styles.cardActions}>
+                            <Ionicons name="heart" size={24} color={Colors.primary} />
                         </View>
                     </View>
                 ))}
@@ -98,5 +98,8 @@ const styles = StyleSheet.create({
     cardAddress: {
         fontSize: FontSize.xs,
         color: Colors.textSecondary,
+    },
+    cardActions: {
+        gap: Spacing.md,
     },
 });

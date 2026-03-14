@@ -40,28 +40,17 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    const text = await response.text();
+    return text ? JSON.parse(text) : (undefined as T);
 }
-export interface User {
-    full_name: string;
-    email: string;
-    phone: string;
-    role: string;
-}
+import {
+    User, Restaurant, MenuItem, Cart, CreateReviewPayload,
+    Reviews, CreateOrderPayload, Order, Favorite
+} from '@/types/api';
+
+
+
 // ─── Restaurant API ─────────────────────────────────────
-export interface Restaurant {
-    id: string;
-    name: string;
-    description: string | null;
-    cuisine_type: string | null;
-    address: string;
-    phone: string | null;
-    image_url: string | null;
-    rating: number;
-    is_open: boolean;
-    opening_time: string | null;
-    closing_time: string | null;
-}
 
 export async function getRestaurants(): Promise<Restaurant[]> {
     return request<Restaurant[]>(API_ENDPOINTS.restaurants);
@@ -81,39 +70,12 @@ export async function getRestaurantMenu(restaurantId: string): Promise<{ items: 
     return request<{ items: number }>(`${API_ENDPOINTS.restaurants}/${restaurantId}/menu`);
 }
 // ─── Menu API ───────────────────────────────────────────
-export interface MenuItem {
-    id: string;
-    restaurant_id: string;
-    name: string;
-    description: string | null;
-    price: number;
-    category: string | null;
-    image_url: string | null;
-    is_available: boolean;
-}
 
 export async function getMenu(restaurantId: string): Promise<MenuItem[]> {
     return request<MenuItem[]>(API_ENDPOINTS.menu(restaurantId));
 }
 
 // ─── Cart API ───────────────────────────────────────────
-export interface CartItem {
-    id: number;
-    menu_item_id: string;
-    quantity: number;
-    name: string;
-    price: number;
-    subtotal: number;
-    restaurant_id: string;
-}
-
-export interface Cart {
-    id: number;
-    user_id: number;
-    restaurant_id: string | null;
-    items: CartItem[];
-    total_price: number;
-}
 
 export async function getCart(): Promise<Cart> {
     return request<Cart>(API_ENDPOINTS.cart);
@@ -133,73 +95,6 @@ export async function removeFromCart(item_id: number): Promise<Cart> {
 }
 
 // ─── Orders API ─────────────────────────────────────────
-export interface OrderItem {
-    menu_item_id: string;
-    quantity: number;
-    special_instructions?: string;
-}
-
-export interface CreateOrderPayload {
-    restaurant_id: string;
-    items: OrderItem[];
-    delivery_address: string;
-    phone: string;
-    notes?: string;
-}
-
-export interface Order {
-    id: string;
-    restaurant_id: string;
-    restaurant_name: string;
-    items: Array<{
-        menu_item_id: string;
-        name: string;
-        quantity: number;
-        price: number;
-        subtotal: number;
-    }>;
-    total: number;
-    status: string;
-    delivery_address: string;
-    phone: string;
-    notes: string | null;
-    created_at: string;
-}
-
-export interface Reviews {
-    id: number;
-    user_id: number;
-
-    user: {
-        id: number;
-        full_name?: string;
-        username: string;
-    };
-
-    order: {
-        id: string;
-        items: Array<{
-            quantity: number;
-            menu_item: {
-                name: string;
-            };
-        }>;
-    };
-
-    restaurant_id: string;
-    rating: number;
-    comment: string;
-}
-export interface ReviewStat {
-    has_reviewed: boolean
-}
-
-export interface CreateReviewPayload {
-    restaurant_id: string;
-    rating: number;
-    order_id: string;
-    comment: string;
-}
 
 export async function createReviews(payload: CreateReviewPayload): Promise<Reviews> {
     return request<Reviews>(`${API_ENDPOINTS.reviews}/${payload.restaurant_id}?order=${payload.order_id}`, {
@@ -211,6 +106,7 @@ export async function createReviews(payload: CreateReviewPayload): Promise<Revie
 export async function getReviews(restaurantId: string): Promise<Reviews[]> {
     return request<Reviews[]>(`${API_ENDPOINTS.reviews}/${restaurantId}`);
 }
+
 
 export async function checkUserReview(order_id: string): Promise<boolean> {
     return request<boolean>(`${API_ENDPOINTS.reviews}/check?order=${order_id}`);
@@ -237,3 +133,28 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
     });
 }
 
+// ─── Favorite API ─────────────────────────────────────────
+
+export async function getFavorite(restaurantId: string): Promise<Favorite> {
+    return request<Favorite>(`${API_ENDPOINTS.favorites}/${restaurantId}`);
+}
+
+export async function getFavorites(): Promise<Favorite[]> {
+    return request<Favorite[]>(API_ENDPOINTS.favorites);
+}
+
+export async function toggleFavorite(restaurantId: string): Promise<Favorite> {
+    return request<Favorite>(`${API_ENDPOINTS.favorites}/${restaurantId}`, {
+        method: 'POST',
+    });
+}
+
+
+export async function removeFavorite(favoriteId: number | null): Promise<void> {
+    if (!favoriteId) {
+        return;
+    }
+    request<void>(`${API_ENDPOINTS.favorites}/${favoriteId}`, {
+        method: 'DELETE',
+    });
+}
