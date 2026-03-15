@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView 
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { MenuItem } from '@/services/api';
+import { MenuItem } from '@/types/api';
 import { useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';

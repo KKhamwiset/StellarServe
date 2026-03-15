@@ -7,7 +7,8 @@ import { MenuModal } from '@/components/ui/menu-modal';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
-import { MenuItem, getMenu } from '@/services/api';
+import { getMenu } from '@/services/api';
+import { MenuItem } from '@/types/api'
 
 export default function MenuManagerScreen() {
     const [modalVisible, setModalVisible] = useState(false);

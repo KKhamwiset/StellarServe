@@ -16,7 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { getCart, createOrder, Cart } from '@/services/api';
+import { getCart, createOrder } from '@/services/api';
+import { Cart } from '@/types/api';
 import { styles } from '@/styles/checkout.styles';
 
 export default function CheckoutScreen() {

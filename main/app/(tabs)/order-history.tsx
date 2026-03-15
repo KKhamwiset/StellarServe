@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getOrders, Order, checkUserReview, ReviewStat } from '@/services/api';
+import { getOrders, checkUserReview } from '@/services/api';
+import { ReviewStat, Order } from '@/types/api';
 import { ModalProps } from '@/components/ui/modal';
 
 const STATUS_CONFIG: Record<string, { icon: string; color: string; label: string }> = {

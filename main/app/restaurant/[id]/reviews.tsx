@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getReviews, getRestaurant, Reviews } from '@/services/api';
+import { getReviews, getRestaurant } from '@/services/api';
+import { Reviews } from '@/types/api';
 
 function StarRating({ count = 5, size = 16, interactive = false, onRatingChange }: { count?: number, size?: number, interactive?: boolean, onRatingChange?: (rating: number) => void }) {
     return (
