@@ -15,7 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getCart, addToCart, removeFromCart, createOrder, Cart } from '@/services/api';
+import { getCart, addToCart, removeFromCart, createOrder } from '@/services/api';
+import { Cart } from '@/types/api';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -89,7 +90,6 @@ export default function CartScreen() {
         return acc;
     }, {} as Record<string, typeof cartItems>);
 
-    // Auto-expand all groups on first load
     useEffect(() => {
         const ids = Object.keys(groupedItems);
         if (ids.length > 0 && expandedGroups.size === 0) {
@@ -165,7 +165,13 @@ export default function CartScreen() {
                                             <>
                                                 {items.map((item) => (
                                                     <View key={item.id} style={styles.cartItem}>
-                                                        <Image source={{ uri: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=200&auto=format&fit=crop' }} style={styles.itemImage} />
+                                                        <View style={styles.imageContainer}>
+                                                            {item.image_url ? (
+                                                                <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+                                                            ) : (
+                                                                <Ionicons name="fast-food-outline" size={24} color={Colors.textMuted} />
+                                                            )}
+                                                        </View>
                                                         <View style={styles.itemDetails}>
                                                             <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                                                             <Text style={styles.itemPrice}>฿{item.price}</Text>
@@ -367,11 +373,20 @@ const styles = StyleSheet.create({
         borderColor: Colors.border,
         alignItems: 'center',
     },
-    itemImage: {
+    imageContainer: {
         width: 70,
         height: 70,
         borderRadius: BorderRadius.md,
         backgroundColor: Colors.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    itemImage: {
+        width: '100%',
+        height: '100%',
     },
     itemDetails: {
         flex: 1,

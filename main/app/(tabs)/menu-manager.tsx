@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
@@ -56,6 +56,13 @@ export default function MenuManagerScreen() {
             setMenuState("Edit");
         }}>
             <View style={styles.menuCard}>
+                <View style={styles.menuItemImageContainer}>
+                    {item.image_url ? (
+                        <Image source={{ uri: item.image_url }} style={styles.menuItemImage} />
+                    ) : (
+                        <Ionicons name="fast-food-outline" size={24} color={Colors.textMuted} />
+                    )}
+                </View>
                 <View style={styles.menuCardInfo}>
                     <Text style={styles.menuCardName}>{item.name}</Text>
                     {item.description ? (
@@ -198,6 +205,21 @@ const styles = StyleSheet.create({
     menuCardDesc: {
         fontSize: FontSize.xs,
         color: Colors.textSecondary,
+    },
+    menuItemImageContainer: {
+        width: 60,
+        height: 60,
+        borderRadius: BorderRadius.md,
+        backgroundColor: Colors.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    menuItemImage: {
+        width: '100%',
+        height: '100%',
     },
     menuCardMeta: {
         flexDirection: 'row',

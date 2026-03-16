@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
@@ -27,7 +27,11 @@ export default function FavoriteScreen() {
                 {favoriteData.map((item) => (
                     <View key={item.id} style={styles.card}>
                         <View style={styles.cardImage}>
-                            <Ionicons name="restaurant-outline" size={28} color={Colors.textMuted} />
+                            {item.restaurant.image_url ? (
+                                <Image source={{ uri: item.restaurant.image_url }} style={styles.fullImage} />
+                            ) : (
+                                <Ionicons name="restaurant-outline" size={28} color={Colors.textMuted} />
+                            )}
                         </View>
                         <View style={styles.cardInfo}>
                             <Text style={styles.cardName}>{item.restaurant.name}</Text>
@@ -80,6 +84,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1,
         borderColor: Colors.border,
+        overflow: 'hidden',
+    },
+    fullImage: {
+        width: '100%',
+        height: '100%',
     },
     cardInfo: {
         flex: 1,

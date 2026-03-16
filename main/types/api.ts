@@ -8,6 +8,10 @@ export interface User {
     phone: string;
     role: string;
 }
+export interface Token {
+    access_token: string;
+    token_type: string;
+}
 
 export interface Restaurant {
     id: string;
@@ -42,6 +46,7 @@ export interface CartItem {
     price: number;
     subtotal: number;
     restaurant_id: string;
+    image_url: string | null;
 }
 
 export interface Cart {

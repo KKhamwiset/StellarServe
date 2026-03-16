@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,12 +9,6 @@ import { getRestaurants } from '@/services/api'
 import { User, Restaurant } from '@/types/api'
 import { StarRating } from '@/components/ui/StarRating';
 
-const QUICK_CATEGORIES = [
-  { icon: 'cafe-outline' as const, label: 'Drink' },
-  { icon: 'fast-food-outline' as const, label: 'Food' },
-  { icon: 'ice-cream-outline' as const, label: 'Cake' },
-  { icon: 'gift-outline' as const, label: 'Snack' },
-];
 
 const CATEGORY_TAGS = [
   { label: 'Burgers', bg: Colors.primary, text: Colors.accent },
@@ -118,17 +112,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Quick Category Icons */}
-        <View style={styles.quickCategories}>
-          {QUICK_CATEGORIES.map((cat, i) => (
-            <TouchableOpacity key={i} style={styles.quickCatItem} activeOpacity={0.7}>
-              <View style={[styles.quickCatIcon, i === 1 && styles.quickCatIconActive]}>
-                <Ionicons name={cat.icon} size={24} color={i === 1 ? Colors.white : Colors.primary} />
-              </View>
-              <Text style={styles.quickCatLabel}>{cat.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         {/* Category Tags */}
         <View style={styles.section}>
@@ -155,7 +138,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Near Me</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
               <Text style={styles.viewAll}>View all</Text>
             </TouchableOpacity>
           </View>
@@ -167,7 +150,11 @@ export default function HomeScreen() {
               onPress={() => router.push(`/restaurant/${item.id}`)}
             >
               <View style={styles.restaurantImage}>
-                <Ionicons name="restaurant-outline" size={28} color={Colors.textMuted} />
+                {item.image_url ? (
+                  <Image source={{ uri: item.image_url }} style={styles.fullImage} />
+                ) : (
+                  <Ionicons name="restaurant-outline" size={28} color={Colors.textMuted} />
+                )}
               </View>
               <View style={styles.restaurantInfo}>
                 <Text style={styles.restaurantName}>{item.name}</Text>
@@ -345,6 +332,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
   },
   restaurantInfo: {
     flex: 1,

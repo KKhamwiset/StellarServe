@@ -1,34 +1,37 @@
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { getRestaurants } from '@/services/api';
-import { Restaurant } from '@/types/api';
 import { StarRating } from '@/components/ui/StarRating';
+import { Restaurant } from '@/types/api';
 
 
 export default function SearchScreen() {
     const [query, setQuery] = useState('');
     const router = useRouter();
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadRestaurants();
+        loadData();
     }, []);
 
-    const loadRestaurants = async () => {
+    const loadData = async () => {
         try {
             const data = await getRestaurants();
             setRestaurants(data);
         } catch (error) {
-            console.error('Failed to load restaurants:', error);
+            console.error('Failed to load search data:', error);
         } finally {
             setIsLoading(false);
         }
     };
+
+
 
     const filtered = useMemo(() => {
         if (!query.trim()) return restaurants;
@@ -104,10 +107,22 @@ export default function SearchScreen() {
                             onPress={() => router.push(`/restaurant/${item.id}`)}
                         >
                             <View style={styles.resultImage}>
-                                <Ionicons name="restaurant-outline" size={24} color={Colors.textMuted} />
+                                {item.image_url ? (
+                                    <Image
+                                        source={{ uri: item.image_url || undefined }}
+                                        style={styles.fullImage}
+                                        resizeMode="cover"
+                                    />
+                                ) : (
+                                    <View style={styles.imagePlaceholder}>
+                                        <Ionicons name="restaurant-outline" size={24} color={Colors.textMuted} />
+                                    </View>
+                                )}
                             </View>
                             <View style={styles.resultInfo}>
-                                <Text style={styles.resultName}>{item.name}</Text>
+                                <View style={styles.nameRow}>
+                                    <Text style={styles.resultName}>{item.name}</Text>
+                                </View>
                                 {item.cuisine_type && (
                                     <Text style={styles.cuisineTag}>{item.cuisine_type}</Text>
                                 )}
@@ -227,11 +242,24 @@ const styles = StyleSheet.create({
         width: 72,
         height: 72,
         borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
         backgroundColor: Colors.card,
-        justifyContent: 'center',
-        alignItems: 'center',
         borderWidth: 1,
         borderColor: Colors.border,
+    },
+    fullImage: {
+        width: '100%',
+        height: '100%',
+    },
+    imagePlaceholder: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    nameRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
     },
     resultInfo: {
         flex: 1,

@@ -52,6 +52,10 @@ import {
 
 // ─── Restaurant API ─────────────────────────────────────
 
+export async function getUser(): Promise<User> {
+    return request<User>(API_ENDPOINTS.auth.me);
+}
+
 export async function getRestaurants(): Promise<Restaurant[]> {
     return request<Restaurant[]>(API_ENDPOINTS.restaurants);
 }

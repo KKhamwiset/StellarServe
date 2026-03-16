@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { Restaurant, Reviews } from '@/types/api';
@@ -17,53 +17,65 @@ export const RestaurantBanner: React.FC<RestaurantBannerProps> = ({
     onViewReviews,
 }) => {
     return (
-        <View style={styles.banner}>
-            <Text style={styles.bannerName}>{restaurant.name}</Text>
-            {restaurant.cuisine_type && (
-                <Text style={styles.bannerCuisine}>{restaurant.cuisine_type}</Text>
-            )}
-            {restaurant.address && (
-                <View style={styles.bannerRow}>
-                    <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
-                    <Text style={styles.bannerDetail}>{restaurant.address}</Text>
-                </View>
-            )}
-            <View style={[styles.bannerRow, { justifyContent: 'space-between', marginTop: Spacing.sm }]}>
-                <View style={styles.bannerRow}>
-                    <View style={[styles.bannerStatusBadge, { backgroundColor: restaurant.is_open ? Colors.success + '20' : Colors.error + '20', marginLeft: 0 }]}>
-                        <View style={[styles.bannerStatusDot, { backgroundColor: restaurant.is_open ? Colors.success : Colors.error }]} />
-                        <Text style={[styles.bannerStatusText, { color: restaurant.is_open ? Colors.success : Colors.error }]}>
-                            {restaurant.is_open ? 'Open' : 'Closed'}
-                        </Text>
+        <ImageBackground
+            source={restaurant.image_url ? { uri: restaurant.image_url } : undefined}
+            style={styles.banner}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <Text style={styles.bannerName}>{restaurant.name}</Text>
+                {restaurant.cuisine_type && (
+                    <Text style={styles.bannerCuisine}>{restaurant.cuisine_type}</Text>
+                )}
+                {restaurant.address && (
+                    <View style={styles.bannerRow}>
+                        <Ionicons name="location-outline" size={14} color={Colors.white} />
+                        <Text style={styles.bannerDetail}>{restaurant.address}</Text>
                     </View>
-                </View>
+                )}
+                <View style={[styles.bannerRow, { justifyContent: 'space-between', marginTop: Spacing.sm }]}>
+                    <View style={styles.bannerRow}>
+                        <View style={[styles.bannerStatusBadge, { backgroundColor: restaurant.is_open ? Colors.success + '20' : Colors.error + '20', marginLeft: 0 }]}>
+                            <View style={[styles.bannerStatusDot, { backgroundColor: restaurant.is_open ? Colors.success : Colors.error }]} />
+                            <Text style={[styles.bannerStatusText, { color: restaurant.is_open ? Colors.success : Colors.error }]}>
+                                {restaurant.is_open ? 'Open' : 'Closed'}
+                            </Text>
+                        </View>
+                    </View>
 
-                <TouchableOpacity
-                    style={styles.reviewsButton}
-                    activeOpacity={0.8}
-                    onPress={onViewReviews}
-                >
-                    <View style={styles.reviewsButtonLeft}>
-                        <Text style={styles.reviewsRatingText}>{restaurant.rating.toFixed(1)}</Text>
-                        <StarRating rating={1} maxRating={1} size={12} />
-                    </View>
-                    <View style={styles.reviewsButtonRight}>
-                        <Text style={styles.reviewsCountText}>
-                            {reviews ? reviews.length : 0} reviews
-                        </Text>
-                        <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
-                    </View>
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.reviewsButton}
+                        activeOpacity={0.8}
+                        onPress={onViewReviews}
+                    >
+                        <View style={styles.reviewsButtonLeft}>
+                            <Text style={styles.reviewsRatingText}>{restaurant.rating.toFixed(1)}</Text>
+                            <StarRating rating={1} maxRating={1} size={12} />
+                        </View>
+                        <View style={styles.reviewsButtonRight}>
+                            <Text style={styles.reviewsCountText}>
+                                {reviews ? reviews.length : 0} reviews
+                            </Text>
+                            <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
+                        </View>
+                    </TouchableOpacity>
+                </View>
             </View>
-        </View>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
     banner: {
         backgroundColor: Colors.primary,
+        minHeight: 180,
+    },
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
         paddingHorizontal: Spacing.lg,
         paddingVertical: Spacing.lg,
+        justifyContent: 'flex-end',
         gap: 6,
     },
     bannerName: {
@@ -83,7 +95,7 @@ const styles = StyleSheet.create({
     },
     bannerDetail: {
         fontSize: FontSize.sm,
-        color: Colors.textMuted,
+        color: Colors.white,
     },
     bannerStatusBadge: {
         flexDirection: 'row',
