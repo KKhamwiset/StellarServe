@@ -113,7 +113,7 @@ export default function MenuManagerScreen() {
                     data={menuItems}
                     keyExtractor={(item) => item.id}
                     renderItem={renderMenuItem}
-                    contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.sm }}
+                    contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.md }}
                     showsVerticalScrollIndicator={false}
                 />
             )}
@@ -207,8 +207,8 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
     },
     menuItemImageContainer: {
-        width: 60,
-        height: 60,
+        width: 100,
+        height: 100,
         borderRadius: BorderRadius.md,
         backgroundColor: Colors.surface,
         justifyContent: 'center',
@@ -216,10 +216,12 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: Colors.border,
+        marginRight: Spacing.lg
     },
     menuItemImage: {
         width: '100%',
         height: '100%',
+
     },
     menuCardMeta: {
         flexDirection: 'row',

@@ -74,6 +74,7 @@ async def update_menu(
     item.price = data.price
     item.category = data.category
     item.is_available = data.is_available
+    item.image_url = data.image_url or item.image_url
 
     db.commit()
     db.refresh(item)
