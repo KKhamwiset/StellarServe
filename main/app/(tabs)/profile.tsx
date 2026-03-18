@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -61,7 +61,15 @@ export default function ProfileScreen() {
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>
                     <View style={styles.avatar}>
-                        <Ionicons name="person" size={40} color={Colors.primary} />
+                        {user?.image_url ? (
+                            <Image
+                                source={{ uri: user.image_url }}
+                                style={styles.avatarImage}
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <Ionicons name="person" size={40} color={Colors.primary} />
+                        )}
                     </View>
                     <View style={styles.profileInfo}>
                         <Text style={styles.profileName}>{user?.full_name}</Text>

@@ -15,6 +15,8 @@ class User(Base):
     role = Column(String, default="consumer", nullable=False) 
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
+    image_url=Column(String, nullable=True)
+
     
     # Audit timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

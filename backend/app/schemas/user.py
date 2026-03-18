@@ -16,6 +16,7 @@ class UserCreate(UserBase):
 class UserSummary(BaseModel):
     id: int
     full_name: str
+    image_url: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -28,6 +29,7 @@ class UserResponse(UserBase):
     is_active: bool
     is_superuser: bool
     role: str
+    image_url: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

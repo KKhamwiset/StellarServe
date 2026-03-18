@@ -7,6 +7,7 @@ export interface User {
     email: string;
     phone: string;
     role: string;
+    image_url: string | null;
 }
 export interface Token {
     access_token: string;
