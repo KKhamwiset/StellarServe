@@ -45,7 +45,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 }
 import {
     User, Restaurant, MenuItem, Cart, CreateReviewPayload,
-    Reviews, CreateOrderPayload, Order, Favorite
+    Reviews, CreateOrderPayload, Order, Favorite , Token
 } from '@/types/api';
 
 
@@ -55,6 +55,7 @@ import {
 export async function getUser(): Promise<User> {
     return request<User>(API_ENDPOINTS.auth.me);
 }
+
 
 export async function getRestaurants(): Promise<Restaurant[]> {
     return request<Restaurant[]>(API_ENDPOINTS.restaurants);

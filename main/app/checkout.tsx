@@ -118,12 +118,6 @@ export default function CheckoutScreen() {
             >
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                     <View style={{ flex: 1 }}>
-                        <View style={styles.header}>
-                            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                                <Ionicons name="arrow-back" size={24} color={Colors.text} />
-                            </TouchableOpacity>
-                            <Text style={styles.headerTitle}>Checkout</Text>
-                        </View>
 
                         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 

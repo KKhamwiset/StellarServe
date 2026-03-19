@@ -8,6 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { User, Token } from '@/types/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ModalProps } from '@/components/ui/modal';
+import { ImagePicker } from '@/components/ui/image-picker';
 
 
 const ITEMS = [
@@ -21,6 +23,7 @@ const ITEMS = [
 
 export default function ProfileScreen() {
     const [user, setUser] = useState<User | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
     useEffect(() => {
         const getUser = async () => {
             const user = await AsyncStorage.getItem('user');
@@ -55,6 +58,33 @@ export default function ProfileScreen() {
         }
     };
 
+    const handleUpdateProfile = async (url: string) => {
+        if (!user) return;
+        
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.me}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ image_url: url })
+            });
+            
+            if (res.ok) {
+                const updatedUser = await res.json();
+                setUser(updatedUser);
+                await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+            } else {
+                alert('Failed to update profile image');
+            }
+        } catch (error) {
+            console.error('Update profile error:', error);
+            alert('Something went wrong');
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -75,10 +105,24 @@ export default function ProfileScreen() {
                         <Text style={styles.profileName}>{user?.full_name}</Text>
                         <Text style={styles.profileEmail}>{user?.email}</Text>
                     </View>
-                    <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
+                    <TouchableOpacity style={styles.editButton} activeOpacity={0.7}
+                        onPress={() => setModalVisible(true)}
+                    >
                         <Ionicons name="create" size={18} color={Colors.primary} />
                     </TouchableOpacity>
                 </View>
+                {modalVisible && (
+                    <ModalProps
+                        onClose={() => setModalVisible(false)}
+                        title="Edit Profile"
+                    >
+                        <ImagePicker
+                            image={user?.image_url || null}
+                            onImageSelect={handleUpdateProfile}
+                        />
+
+                    </ModalProps>
+                )}
 
 
                 {/* Menu List */}

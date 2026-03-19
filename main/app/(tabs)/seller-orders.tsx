@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { Order, getSellerOrders, updateOrderStatus } from '@/services/api';
+import { getSellerOrders, updateOrderStatus } from '@/services/api';
+import { Order } from '@/types/api';
 import { ModalProps } from '@/components/ui/modal';
 
 const STATUS_CONFIG: Record<string, { icon: string; color: string; label: string }> = {

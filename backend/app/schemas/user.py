@@ -13,6 +13,11 @@ class UserCreate(UserBase):
     password: str
     restaurant_name: Optional[str] = None
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    image_url: Optional[str] = None
+    phone: Optional[str] = None
+
 class UserSummary(BaseModel):
     id: int
     full_name: str

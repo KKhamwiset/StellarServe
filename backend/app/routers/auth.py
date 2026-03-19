@@ -8,7 +8,7 @@ import uuid
 from app.database import get_db
 from app.models.user import User
 from app.models.restaurant import Restaurant
-from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, TokenData
+from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, TokenData, UserUpdate
 from app.security import verify_password, get_password_hash, create_access_token
 from app.config import get_settings
 
@@ -137,6 +137,23 @@ async def login(user_in: UserLogin, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 async def read_current_user(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.put("/me", response_model=UserResponse)
+async def update_current_user(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if user_update.full_name is not None:
+        current_user.full_name = user_update.full_name
+    if user_update.image_url is not None:
+        current_user.image_url = user_update.image_url
+    if user_update.phone is not None:
+        current_user.phone = user_update.phone
+
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 @router.post("/logout")

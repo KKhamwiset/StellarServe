@@ -8,7 +8,8 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, API_ENDPOINTS } from '@/constants/api';
 import { SuccessModal } from './success-modal';
-import * as ImagePicker from 'expo-image-picker'
+import { ImagePicker } from './image-picker';
+
 interface MenuModalProps {
     title: string;
     action: string;
@@ -50,46 +51,6 @@ export function MenuModal(
         setCategory('');
         setImage(null);
     }
-
-    const pickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-            base64: true
-        });
-
-        if (!result.canceled) {
-            return result.assets[0];
-        }
-    };
-    const uploadToImgBB = async (base64: string) => {
-        const API_KEY = process.env.EXPO_PUBLIC_IMG_API;
-        console.log(API_KEY)
-        const formData = new FormData();
-        formData.append("image", base64);
-
-        const res = await fetch(
-            `https://api.imgbb.com/1/upload?key=${API_KEY}`,
-            {
-                method: "POST",
-                body: formData,
-            }
-        );
-
-        const data = await res.json();
-        console.log(data)
-        return data.data.url;
-    };
-    const handleImage = async () => {
-        const image = await pickImage();
-        if (!image || !image.base64) return;
-
-        const url = await uploadToImgBB(image.base64);
-        console.log("Uploaded URL:", url);
-        setImage(url);
-    };
 
     const handleAddItem = async () => {
         setLoading(true);
@@ -197,22 +158,7 @@ export function MenuModal(
                         </View>
                         <View style={styles.formGroup}>
                             <Text style={styles.label}>Image</Text>
-                            <TouchableOpacity style={styles.imagePicker}
-                                onPress={handleImage}>
-                                {image ? (
-                                    <View style={styles.imagePreviewContainer}>
-                                        <Image source={{ uri: image }} style={styles.imagePreview} />
-                                        <View style={styles.imageOverlay}>
-                                            <Ionicons name="camera" size={20} color={Colors.white} />
-                                        </View>
-                                    </View>
-                                ) : (
-                                    <View style={styles.imagePlaceholder}>
-                                        <Ionicons name="add" size={24} color={Colors.textMuted} />
-                                        <Text style={styles.imagePlaceholderText}>Add Photo</Text>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
+                            <ImagePicker image={image} onImageSelect={setImage} />
                         </View>
                         <View style={styles.formGroup}>
                             <Text style={styles.label}>Price *</Text>
@@ -355,40 +301,5 @@ const styles = StyleSheet.create({
         color: Colors.white,
         fontSize: FontSize.md,
         fontWeight: 'bold',
-    },
-    imagePicker: {
-        height: 160,
-        backgroundColor: Colors.surface,
-        borderRadius: BorderRadius.md,
-        borderWidth: 1,
-        borderColor: Colors.border,
-        borderStyle: 'dashed',
-        overflow: 'hidden',
-    },
-    imagePlaceholder: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imagePlaceholderText: {
-        fontSize: FontSize.xs,
-        color: Colors.textMuted,
-        marginTop: Spacing.xs,
-    },
-    imagePreviewContainer: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-    },
-    imagePreview: {
-        width: '100%',
-        height: '100%',
-    },
-    imageOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        opacity: 0,
     },
 });
