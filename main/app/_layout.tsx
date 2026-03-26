@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
+import Toast from 'react-native-toast-message';
 
 const StellaServeLight = {
   ...DefaultTheme,
@@ -44,8 +45,21 @@ export default function RootLayout() {
           name="restaurant/[id]/createReview"
           options={{ headerShown: false, presentation: 'modal' }}
         />
+        <Stack.Screen
+          name="payment"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="checkout"
+          options={{ headerShown: false, title: 'Checkout' }}
+        />
+        <Stack.Screen
+          name="notifications"
+          options={{ headerShown: false }}
+        />
       </Stack>
       <StatusBar style="dark" />
+      <Toast />
     </ThemeProvider>
   );
 }

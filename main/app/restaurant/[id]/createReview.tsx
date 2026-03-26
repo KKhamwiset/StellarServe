@@ -7,6 +7,7 @@ import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { createReviews } from '@/services/api';
 
 import { StarRating } from '@/components/ui/StarRating';
+import { SuccessModal } from '@/components/ui/success-modal';
 
 export default function CreateReviewScreen() {
     const { id, order } = useLocalSearchParams<{ id: string, order: string }>();
@@ -16,6 +17,7 @@ export default function CreateReviewScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
+    const [successVisible, setSuccessVisible] = useState(false);
 
     const handleSubmitReview = async () => {
         if (rating === 0) {
@@ -32,9 +34,7 @@ export default function CreateReviewScreen() {
                 comment: comment.trim()
             });
 
-            Alert.alert("Success", "Your review has been posted!", [
-                { text: "OK", onPress: () => router.back() }
-            ]);
+            setSuccessVisible(true);
         } catch (error) {
             console.error("Failed to post review:", error);
             Alert.alert("Error", "Could not post your review. Please try again.");
@@ -98,6 +98,16 @@ export default function CreateReviewScreen() {
                     </TouchableOpacity>
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            <SuccessModal
+                visible={successVisible}
+                title="Success"
+                message="Your review has been posted!"
+                onClose={() => {
+                    setSuccessVisible(false);
+                    router.back();
+                }}
+            />
         </SafeAreaView>
     );
 }

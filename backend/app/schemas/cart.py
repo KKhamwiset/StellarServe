@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from .restaurant import RestaurantResponse
 
 class CartItemBase(BaseModel):
     menu_item_id: str
@@ -15,7 +16,7 @@ class CartItemResponse(CartItemBase):
     name: str
     price: float
     subtotal: float
-
+    restaurant: RestaurantResponse
     class Config:
         from_attributes = True
 

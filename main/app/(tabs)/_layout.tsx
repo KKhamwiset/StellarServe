@@ -2,7 +2,9 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
 export default function TabLayout() {
   const [role, setRole] = useState<string | null>(null);
@@ -21,6 +23,8 @@ export default function TabLayout() {
   }, []);
 
   const isSeller = role === 'seller';
+  const isRider = role === 'rider';
+  const isConsumer = role === 'consumer';
 
   return (
     <Tabs
@@ -54,7 +58,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           headerShown: false,
-          href: isSeller ? null : '/(tabs)',
+          href: isConsumer ? '/(tabs)' : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="storefront" size={size} color={color} />
           ),
@@ -65,7 +69,7 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           headerShown: false,
-          href: isSeller ? null : '/(tabs)/search',
+          href: isConsumer ? '/(tabs)/search' : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -76,7 +80,7 @@ export default function TabLayout() {
         options={{
           title: 'Favorite',
           headerShown: false,
-          href: isSeller ? null : '/(tabs)/favorite',
+          href: isConsumer ? '/(tabs)/favorite' : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bookmark" size={size} color={color} />
           ),
@@ -87,7 +91,7 @@ export default function TabLayout() {
         options={{
           title: 'Order History',
           headerShown: false,
-          href: isSeller ? null : '/(tabs)/order-history',
+          href: isConsumer ? '/(tabs)/order-history' : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time-outline" size={size} color={color} />
           ),
@@ -129,7 +133,20 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Shared tab */}
+      {/* Rider tabs */}
+      <Tabs.Screen
+        name="rider-deliveries"
+        options={{
+          title: 'Deliveries',
+          headerShown: false,
+          href: isRider ? '/(tabs)/rider-deliveries' : null,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bicycle" size={size} color={color} />
+          ),
+        }}
+      />
+
+      {/* Shared tabs */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -140,6 +157,8 @@ export default function TabLayout() {
           ),
         }}
       />
-    </Tabs>
+
+    </Tabs >
+
   );
 }

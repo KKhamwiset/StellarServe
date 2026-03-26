@@ -8,6 +8,8 @@ import { useState, useEffect } from 'react';
 import { getRestaurants } from '@/services/api'
 import { User, Restaurant } from '@/types/api'
 import { StarRating } from '@/components/ui/StarRating';
+import { NotificationBadge } from '@/components/ui/NotificationBadge';
+import { CartBadge } from '@/components/ui/CartBadge';
 
 
 const CATEGORY_TAGS = [
@@ -51,16 +53,19 @@ export default function HomeScreen() {
 
   const role = user?.role;
   const isSeller = role === 'seller';
-
+  const isRider = role === 'rider';
 
   useEffect(() => {
     if (!loading && isSeller) {
       router.replace('/(tabs)/dashboard');
     }
-  }, [loading, isSeller]);
+    if (!loading && isRider) {
+      router.replace('/(tabs)/rider-deliveries');
+    }
+  }, [loading, isSeller, isRider]);
 
 
-  if (loading || isSeller) {
+  if (loading || isSeller || isRider) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -88,11 +93,12 @@ export default function HomeScreen() {
         <View style={styles.locationRow}>
           <View style={styles.locationLeft}>
             <Ionicons name="location" size={20} color={Colors.primary} />
-            <Text style={styles.locationText}>9 West 46 Th Street, New York City</Text>
+            <Text style={styles.locationText}>{user?.address}</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/cart')}>
-            <Ionicons name="cart-outline" size={24} color={Colors.primary} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+            <NotificationBadge size={24} color={Colors.primary} />
+            <CartBadge size={24} color={Colors.primary} />
+          </View>
         </View>
 
         {/* Special Offers Banner */}
@@ -145,8 +151,9 @@ export default function HomeScreen() {
           {featured?.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={styles.restaurantCard}
+              style={[styles.restaurantCard, !item.is_open && { opacity: 0.6 }]}
               activeOpacity={0.7}
+              disabled={!item.is_open}
               onPress={() => router.push(`/restaurant/${item.id}`)}
             >
               <View style={styles.restaurantImage}>
@@ -154,6 +161,11 @@ export default function HomeScreen() {
                   <Image source={{ uri: item.image_url }} style={styles.fullImage} />
                 ) : (
                   <Ionicons name="restaurant-outline" size={28} color={Colors.textMuted} />
+                )}
+                {!item.is_open && (
+                  <View style={styles.closedOverlay}>
+                    <Text style={styles.closedText}>Closed</Text>
+                  </View>
                 )}
               </View>
               <View style={styles.restaurantInfo}>
@@ -333,6 +345,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: 'hidden',
+  },
+  closedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closedText: {
+    color: Colors.white,
+    fontSize: FontSize.lg,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   fullImage: {
     width: '100%',

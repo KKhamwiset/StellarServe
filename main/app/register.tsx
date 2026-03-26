@@ -27,8 +27,9 @@ export default function RegisterScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [role, setRole] = useState<'consumer' | 'seller'>('consumer');
+    const [role, setRole] = useState<'consumer' | 'seller' | 'rider'>('consumer');
     const [restaurantName, setRestaurantName] = useState('');
+    const [vehicleType, setVehicleType] = useState<'motorcycle' | 'bicycle' | 'car'>('motorcycle');
 
     const handleRegister = async () => {
         if (password !== confirmPassword) {
@@ -47,6 +48,7 @@ export default function RegisterScreen() {
             password: password,
             role: role,
             ...(role === 'seller' && { restaurant_name: restaurantName }),
+            ...(role === 'rider' && { vehicle_type: vehicleType }),
         }
 
         try {
@@ -141,6 +143,24 @@ export default function RegisterScreen() {
                                         role === 'seller' && roleSelectorStyles.optionTextActive,
                                     ]}>Seller</Text>
                                 </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[
+                                        roleSelectorStyles.option,
+                                        role === 'rider' && roleSelectorStyles.optionActive,
+                                    ]}
+                                    onPress={() => setRole('rider')}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons
+                                        name="bicycle-outline"
+                                        size={20}
+                                        color={role === 'rider' ? Colors.white : Colors.textMuted}
+                                    />
+                                    <Text style={[
+                                        roleSelectorStyles.optionText,
+                                        role === 'rider' && roleSelectorStyles.optionTextActive,
+                                    ]}>Rider</Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
 
@@ -189,6 +209,68 @@ export default function RegisterScreen() {
                             </View>
                         )}
 
+                        {role === 'rider' && (
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Vehicle Type</Text>
+                                <View style={roleSelectorStyles.container}>
+                                    <TouchableOpacity
+                                        style={[
+                                            roleSelectorStyles.option,
+                                            vehicleType === 'motorcycle' && roleSelectorStyles.optionActive,
+                                        ]}
+                                        onPress={() => setVehicleType('motorcycle')}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons
+                                            name="speedometer-outline"
+                                            size={18}
+                                            color={vehicleType === 'motorcycle' ? Colors.white : Colors.textMuted}
+                                        />
+                                        <Text style={[
+                                            roleSelectorStyles.optionText,
+                                            vehicleType === 'motorcycle' && roleSelectorStyles.optionTextActive,
+                                        ]}>Motorcycle</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            roleSelectorStyles.option,
+                                            vehicleType === 'bicycle' && roleSelectorStyles.optionActive,
+                                        ]}
+                                        onPress={() => setVehicleType('bicycle')}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons
+                                            name="bicycle-outline"
+                                            size={18}
+                                            color={vehicleType === 'bicycle' ? Colors.white : Colors.textMuted}
+                                        />
+                                        <Text style={[
+                                            roleSelectorStyles.optionText,
+                                            vehicleType === 'bicycle' && roleSelectorStyles.optionTextActive,
+                                        ]}>Bicycle</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            roleSelectorStyles.option,
+                                            vehicleType === 'car' && roleSelectorStyles.optionActive,
+                                        ]}
+                                        onPress={() => setVehicleType('car')}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons
+                                            name="car-outline"
+                                            size={18}
+                                            color={vehicleType === 'car' ? Colors.white : Colors.textMuted}
+                                        />
+                                        <Text style={[
+                                            roleSelectorStyles.optionText,
+                                            vehicleType === 'car' && roleSelectorStyles.optionTextActive,
+                                        ]}>Car</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        )}
+
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Email Address</Text>
                             <View style={styles.inputWrapper}>
@@ -205,21 +287,6 @@ export default function RegisterScreen() {
                             </View>
                         </View>
 
-                        {role === 'seller' && (
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Restaurant Name</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Ionicons name="restaurant-outline" size={20} color={Colors.textMuted} style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="My Restaurant"
-                                        placeholderTextColor={Colors.textMuted}
-                                        value={restaurantName}
-                                        onChangeText={setRestaurantName}
-                                    />
-                                </View>
-                            </View>
-                        )}
 
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Phone Number</Text>

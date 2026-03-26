@@ -73,18 +73,6 @@ export default function SearchScreen() {
                 </View>
             </View>
 
-            {/* Sort / Filter Row */}
-            <View style={styles.filterRow}>
-                <TouchableOpacity style={styles.sortButton}>
-                    <Text style={styles.sortText}>Sort by</Text>
-                    <Ionicons name="chevron-down" size={16} color={Colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.filterButton}>
-                    <Ionicons name="options-outline" size={18} color={Colors.text} />
-                    <Text style={styles.filterText}>Filter</Text>
-                </TouchableOpacity>
-            </View>
-
             {/* Results */}
             {isLoading ? (
                 <View style={styles.loadingContainer}>
@@ -102,8 +90,9 @@ export default function SearchScreen() {
                     {filtered.map((item) => (
                         <TouchableOpacity
                             key={item.id}
-                            style={styles.resultCard}
+                            style={[styles.resultCard, !item.is_open && { opacity: 0.6 }]}
                             activeOpacity={0.7}
+                            disabled={!item.is_open}
                             onPress={() => router.push(`/restaurant/${item.id}`)}
                         >
                             <View style={styles.resultImage}>
@@ -228,6 +217,7 @@ const styles = StyleSheet.create({
     },
     results: {
         flex: 1,
+        marginTop: Spacing.md,
         paddingHorizontal: Spacing.lg,
     },
     resultCard: {

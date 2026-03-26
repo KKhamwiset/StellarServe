@@ -4,4 +4,5 @@ from .order import Order
 from .cart import Cart, CartItem
 from .reviews import Review
 from .favorite import Favorite
+from .notification import Notification
 

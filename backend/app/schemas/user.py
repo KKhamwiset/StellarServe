@@ -6,17 +6,21 @@ class UserBase(BaseModel):
     email: EmailStr
     username: str
     full_name: Optional[str] = None
+    address: Optional[str] = None
     phone: Optional[str] = None
-    role: Optional[str] = "consumer"  # "consumer" or "seller"
+    role: Optional[str] = "consumer"  # "consumer", "seller", or "rider"
 
 class UserCreate(UserBase):
     password: str
     restaurant_name: Optional[str] = None
+    vehicle_type: Optional[str] = None  # "motorcycle", "bicycle", "car"
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     image_url: Optional[str] = None
     phone: Optional[str] = None
+    address: Optional[str] = None
+    vehicle_type: Optional[str] = None
 
 class UserSummary(BaseModel):
     id: int
@@ -35,6 +39,8 @@ class UserResponse(UserBase):
     is_superuser: bool
     role: str
     image_url: Optional[str] = None
+    vehicle_type: Optional[str] = None
+    is_available: Optional[bool] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

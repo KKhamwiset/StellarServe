@@ -4,13 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { useState, useEffect } from 'react';
-import { getMyRestaurant, getRestaurantOrders, getRestaurantMenu } from '@/services/api';
+import { getMyRestaurant, getRestaurantOrders, getRestaurantMenu, getRevenue } from '@/services/api';
 import { Restaurant } from '@/types/api'
 import { StatCard } from '@/components/ui/StatCard';
+import { NotificationBadge } from '@/components/ui/NotificationBadge';
 
 export default function DashboardScreen() {
     const [restaurantData, setRestaurantData] = useState<Restaurant | null>(null);
     const [orderData, setOrderData] = useState<{ orders_count: number; income: number } | null>(null);
+    const [revenue, setRevenue] = useState<number | null>(null);
     const [menuData, setMenuData] = useState<{ items: number } | null>(null);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
@@ -18,9 +20,12 @@ export default function DashboardScreen() {
             try {
                 const restaurant = await getMyRestaurant();
                 setRestaurantData(restaurant);
-                const orderData = await getRestaurantOrders(restaurant.id);
 
+                const orderData = await getRestaurantOrders(restaurant.id);
                 setOrderData(orderData);
+
+                const rev = await getRevenue(restaurant.id);
+                setRevenue(rev.total_revenue)
                 const menuData = await getRestaurantMenu(restaurant.id);
 
                 setMenuData(menuData);
@@ -35,8 +40,9 @@ export default function DashboardScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Dashboard</Text>
+            <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                <Text style={styles.headerTitle}>{restaurantData?.name}</Text>
+                <NotificationBadge size={24} color={Colors.primary} />
             </View>
 
             <View style={styles.content}>
@@ -48,7 +54,7 @@ export default function DashboardScreen() {
                     />
                     <StatCard
                         icon="cash-outline"
-                        value={`฿${orderData?.income || 0}`}
+                        value={`฿${revenue}`}
                         label="Revenue"
                         iconColor={Colors.accent}
                     />
@@ -58,7 +64,7 @@ export default function DashboardScreen() {
                         label="Menu Items"
                     />
                     <StatCard
-                        icon="star-outline"
+                        icon="star"
                         value={restaurantData?.rating}
                         label="Rating"
                         iconColor={Colors.star}

@@ -21,4 +21,5 @@ export const API_ENDPOINTS = {
         logout: '/api/auth/logout',
     },
     favorites: '/api/favorites',
+    notifications: '/api/notifications',
 };

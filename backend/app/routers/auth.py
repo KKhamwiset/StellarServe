@@ -67,10 +67,10 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
                 detail="A user with this phone number already exists"
             )
 
-    if user_in.role and user_in.role not in ("consumer", "seller"):
+    if user_in.role and user_in.role not in ("consumer", "seller", "rider"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Role must be 'consumer' or 'seller'"
+            detail="Role must be 'consumer', 'seller', or 'rider'"
         )
 
     if user_in.role == "seller" and not user_in.restaurant_name:
@@ -87,6 +87,8 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
         full_name=user_in.full_name,
         phone=user_in.phone,
         role=user_in.role or "consumer",
+        vehicle_type=user_in.vehicle_type if user_in.role == "rider" else None,
+        is_available=True if user_in.role == "rider" else True,
     )
     
     db.add(new_user)
@@ -151,6 +153,10 @@ async def update_current_user(
         current_user.image_url = user_update.image_url
     if user_update.phone is not None:
         current_user.phone = user_update.phone
+    if hasattr(user_update, 'address') and user_update.address is not None:
+        current_user.address = user_update.address
+    if hasattr(user_update, 'vehicle_type') and user_update.vehicle_type is not None:
+        current_user.vehicle_type = user_update.vehicle_type
 
     db.commit()
     db.refresh(current_user)

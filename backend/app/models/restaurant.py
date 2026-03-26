@@ -7,7 +7,7 @@ class Restaurant(Base):
     __tablename__ = "restaurants"
 
     id = Column(String, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, unique=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String)
     cuisine_type = Column(String)

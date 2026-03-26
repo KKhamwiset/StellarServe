@@ -28,6 +28,25 @@ async def get_my_restaurant(current_user: User = Depends(get_current_user), db: 
         raise HTTPException(status_code=404, detail="No restaurant found")
     return restaurant
 
+@router.patch("/{restaurant_id}/status", response_model=RestaurantResponse)
+async def update_restaurant_status(
+    restaurant_id: str, 
+    is_open: bool, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Toggle a restaurant's open/closed status."""
+    restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
+    if not restaurant:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+    if restaurant.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this restaurant")
+    
+    restaurant.is_open = is_open
+    db.commit()
+    db.refresh(restaurant)
+    return restaurant
+
 @router.get("/{restaurant_id}", response_model=RestaurantResponse)
 async def get_restaurant(restaurant_id: str, db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)):
@@ -36,6 +55,20 @@ async def get_restaurant(restaurant_id: str, db: Session = Depends(get_db),
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
     return restaurant
+
+@router.get("/{restaurant_id}/revenue")
+async def get_total_revenue(
+    restaurant_id : str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user:
+        raise HTTPException(status=401,detail="Unthorized access endpoint")
+    if current_user.role != "seller":
+        raise HTTPException(status=401,detail="Unthorized access endpoint")
+    
+    sum = db.query(func.sum(Order.total_price)).filter(Order.restaurant_id == restaurant_id).scalar()
+    return {"total_revenue": sum or 0}
 
 @router.get("/{restaurant_id}/menu")
 async def get_restaurant_menu(

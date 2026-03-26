@@ -111,19 +111,22 @@ def _build_cart_response(cart: Cart, db: Session) -> CartResponse:
     for item in cart.items:
         menu_item = db.query(MenuItem).filter(MenuItem.id == item.menu_item_id).first()
         if menu_item:
-            subtotal = menu_item.price * item.quantity
-            total_price += subtotal
-            items.append(
-                CartItemResponse(
-                    id=item.id,
-                    menu_item_id=item.menu_item_id,
-                    quantity=item.quantity,
-                    restaurant_id=item.restaurant_id,
-                    name=menu_item.name,
-                    price=menu_item.price,
-                    subtotal=subtotal,
+            restaurant = db.query(Restaurant).filter(Restaurant.id == item.restaurant_id).first()
+            if restaurant:
+                subtotal = menu_item.price * item.quantity
+                total_price += subtotal
+                items.append(
+                    CartItemResponse(
+                        id=item.id,
+                        menu_item_id=item.menu_item_id,
+                        quantity=item.quantity,
+                        restaurant_id=item.restaurant_id,
+                        name=menu_item.name,
+                        price=menu_item.price,
+                        subtotal=subtotal,
+                        restaurant=restaurant
+                    )
                 )
-            )
 
     return CartResponse(
         id=cart.id,

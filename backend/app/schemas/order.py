@@ -33,6 +33,7 @@ class OrderBase(BaseModel):
     delivery_address: str
     phone: str
     notes: Optional[str] = None
+    delivery_fee: float = 0.0
 
 class OrderCreate(OrderBase):
     items: List[OrderItemCreate]
@@ -42,7 +43,12 @@ class OrderResponse(OrderBase):
     restaurant_name: str
     items: List[OrderItemResponse]
     total: float
+    delivery_fee: float = 0.0
     status: str
+    rider_id: Optional[int] = None
+    rider_name: Optional[str] = None
+    rider_phone: Optional[str] = None
+    customer_name: Optional[str] = None
     created_at: datetime
 
     class Config:

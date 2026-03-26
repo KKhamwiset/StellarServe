@@ -45,7 +45,8 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 }
 import {
     User, Restaurant, MenuItem, Cart, CreateReviewPayload,
-    Reviews, CreateOrderPayload, Order, Favorite , Token
+    Reviews, CreateOrderPayload, Order, Favorite,
+    Notification, NotificationCount
 } from '@/types/api';
 
 
@@ -73,6 +74,9 @@ export async function getRestaurantOrders(restaurantId: string): Promise<{ order
 }
 export async function getRestaurantMenu(restaurantId: string): Promise<{ items: number }> {
     return request<{ items: number }>(`${API_ENDPOINTS.restaurants}/${restaurantId}/menu`);
+}
+export async function getRevenue(restaurantId: string): Promise<{ total_revenue: number }> {
+    return request<{ total_revenue: number }>(`${API_ENDPOINTS.restaurants}/${restaurantId}/revenue`);
 }
 // ─── Menu API ───────────────────────────────────────────
 
@@ -138,6 +142,16 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
     });
 }
 
+export async function getRiderOrders(): Promise<Order[]> {
+    return request<Order[]>(`${API_ENDPOINTS.orders}/rider`);
+}
+
+export async function updateRiderOrderStatus(orderId: string, status: string): Promise<Order> {
+    return request<Order>(`${API_ENDPOINTS.orders}/${orderId}/rider-status?status=${encodeURIComponent(status)}`, {
+        method: 'PUT',
+    });
+}
+
 // ─── Favorite API ─────────────────────────────────────────
 
 export async function getFavorite(restaurantId: string): Promise<Favorite> {
@@ -161,5 +175,27 @@ export async function removeFavorite(favoriteId: number | null): Promise<void> {
     }
     request<void>(`${API_ENDPOINTS.favorites}/${favoriteId}`, {
         method: 'DELETE',
+    });
+}
+
+// ─── Notifications API ──────────────────────────────────
+
+export async function getNotifications(): Promise<Notification[]> {
+    return request<Notification[]>(API_ENDPOINTS.notifications);
+}
+
+export async function getUnreadNotificationCount(): Promise<NotificationCount> {
+    return request<NotificationCount>(`${API_ENDPOINTS.notifications}/unread-count`);
+}
+
+export async function markNotificationRead(notificationId: number): Promise<Notification> {
+    return request<Notification>(`${API_ENDPOINTS.notifications}/${notificationId}/read`, {
+        method: 'PUT',
+    });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+    return request<void>(`${API_ENDPOINTS.notifications}/read-all`, {
+        method: 'PUT',
     });
 }

@@ -6,17 +6,19 @@ import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { getSellerOrders, updateOrderStatus } from '@/services/api';
 import { Order } from '@/types/api';
 import { ModalProps } from '@/components/ui/modal';
+import { SuccessModal } from '@/components/ui/success-modal';
 
 const STATUS_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
     pending: { icon: 'time-outline', color: Colors.warning, label: 'Pending' },
     confirmed: { icon: 'checkmark-circle-outline', color: Colors.info, label: 'Confirmed' },
     preparing: { icon: 'flame-outline', color: '#F97316', label: 'Preparing' },
-    delivering: { icon: 'bicycle-outline', color: Colors.info, label: 'On the way' },
+    picked_up: { icon: 'bag-check-outline', color: '#8B5CF6', label: 'Picked Up' },
+    delivering: { icon: 'bicycle-outline', color: Colors.info, label: 'Delivering' },
     delivered: { icon: 'checkmark-done-outline', color: Colors.success, label: 'Delivered' },
     cancelled: { icon: 'close-circle-outline', color: Colors.error, label: 'Cancelled' },
 };
 
-const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'delivering', 'delivered'];
+const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'picked_up', 'delivering', 'delivered'];
 
 function getStatusConfig(status: string) {
     return STATUS_CONFIG[status.toLowerCase()] ?? { icon: 'help-outline', color: Colors.textMuted, label: status };
@@ -34,6 +36,8 @@ export default function SellerOrdersScreen() {
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [successModalConfig, setSuccessModalConfig] = useState({ title: '', message: '' });
 
     const loadOrders = useCallback(async () => {
         try {
@@ -57,6 +61,14 @@ export default function SellerOrdersScreen() {
             const updated = await updateOrderStatus(orderId, newStatus);
             setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
             setSelectedOrder(updated);
+            
+            const sc = getStatusConfig(newStatus);
+            if (newStatus === 'cancelled') {
+                setSuccessModalConfig({ title: 'Order Cancelled', message: 'The order has been cancelled successfully.' });
+            } else {
+                setSuccessModalConfig({ title: 'Status Updated', message: `Order status changed to ${sc.label}.` });
+            }
+            setSuccessModalVisible(true);
         } catch (error) {
             console.error('Failed to update status:', error);
             Alert.alert('Error', 'Failed to update order status');
@@ -99,8 +111,14 @@ export default function SellerOrdersScreen() {
                         <Text style={[styles.statusText, { color: sc.color }]}>{sc.label}</Text>
                     </View>
                 </View>
+                <View>
+                    <Text>
+                        {item.customer_name}
+                    </Text>
+                </View>
 
                 {/* Order items */}
+
                 <View style={styles.orderItems}>
                     {item.items.map((orderItem, i) => (
                         <View key={i} style={styles.orderItemRow}>
@@ -178,6 +196,9 @@ export default function SellerOrdersScreen() {
                             </View>
 
                             {/* Delivery Address */}
+                            <View style={styles.modalRow}>
+                                <Text style={styles.modalDetail}>{selectedOrder.customer_name}</Text>
+                            </View>
                             {selectedOrder.delivery_address ? (
                                 <View style={styles.modalRow}>
                                     <Ionicons name="location-outline" size={15} color={Colors.textMuted} />
@@ -295,6 +316,13 @@ export default function SellerOrdersScreen() {
                     </ModalProps>
                 );
             })()}
+
+            <SuccessModal
+                visible={successModalVisible}
+                title={successModalConfig.title}
+                message={successModalConfig.message}
+                onClose={() => setSuccessModalVisible(false)}
+            />
         </SafeAreaView>
     );
 }

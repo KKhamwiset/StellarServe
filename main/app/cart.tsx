@@ -6,22 +6,16 @@ import {
     TouchableOpacity,
     ScrollView,
     LayoutAnimation,
-    UIManager,
-    Image,
     Platform,
     ActivityIndicator,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
-import { getCart, addToCart, removeFromCart, createOrder } from '@/services/api';
+import { getCart, addToCart, removeFromCart } from '@/services/api';
 import { Cart } from '@/types/api';
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export default function CartScreen() {
     const [cart, setCart] = useState<Cart | null>(null);
@@ -133,11 +127,11 @@ export default function CartScreen() {
                         <View style={styles.itemList}>
                             {Object.entries(groupedItems).map(([restaurantId, items]) => {
                                 const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                                const deliveryFee = 50;
+                                const deliveryFee = 0;
                                 const total = subtotal + deliveryFee;
                                 const isExpanded = expandedGroups.has(restaurantId);
                                 const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-
+                                const restData = items[0].restaurant;
                                 return (
                                     <View key={restaurantId} style={styles.restaurantGroup}>
                                         <TouchableOpacity
@@ -146,8 +140,15 @@ export default function CartScreen() {
                                             activeOpacity={0.7}
                                         >
                                             <View style={styles.groupHeaderLeft}>
-                                                <Ionicons name="restaurant-outline" size={18} color={Colors.primary} />
-                                                <Text style={styles.groupHeader}>Order from {restaurantId}</Text>
+                                                {restData.image_url ? (
+                                                    <Image
+                                                        source={{ uri: restData.image_url }}
+                                                        style={styles.restaurantImage}
+                                                    />
+                                                ) : (
+                                                    <Ionicons name="restaurant-outline" size={18} color={Colors.primary} />
+                                                )}
+                                                <Text style={styles.groupHeader}>{restData.name}</Text>
                                             </View>
                                             <View style={styles.groupHeaderRight}>
                                                 <View style={styles.itemCountBadge}>
@@ -165,13 +166,6 @@ export default function CartScreen() {
                                             <>
                                                 {items.map((item) => (
                                                     <View key={item.id} style={styles.cartItem}>
-                                                        <View style={styles.imageContainer}>
-                                                            {item.image_url ? (
-                                                                <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-                                                            ) : (
-                                                                <Ionicons name="fast-food-outline" size={24} color={Colors.textMuted} />
-                                                            )}
-                                                        </View>
                                                         <View style={styles.itemDetails}>
                                                             <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                                                             <Text style={styles.itemPrice}>฿{item.price}</Text>
@@ -261,6 +255,13 @@ const styles = StyleSheet.create({
         padding: Spacing.xs,
         backgroundColor: Colors.surface,
         borderRadius: BorderRadius.full,
+    },
+    restaurantImage: {
+        width: 40,
+        height: 40,
+        borderRadius: BorderRadius.sm,
+        borderWidth: 0.5,
+        borderColor: "#000000",
     },
     scrollView: {
         flex: 1,

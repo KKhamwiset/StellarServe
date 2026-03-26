@@ -132,4 +132,51 @@ export const styles = StyleSheet.create({
         fontSize: FontSize.md,
         fontWeight: 'bold',
     },
+    paymentOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        marginBottom: Spacing.sm,
+        backgroundColor: Colors.surface,
+    },
+    paymentOptionSelected: {
+        borderColor: Colors.primary,
+        backgroundColor: Colors.primary + '10',
+    },
+    paymentLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    paymentText: {
+        fontSize: FontSize.md,
+        color: Colors.text,
+        fontWeight: '500',
+    },
+    paymentTextSelected: {
+        color: Colors.primary,
+        fontWeight: '700',
+    },
+    radio: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: Colors.textMuted,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    radioSelected: {
+        borderColor: Colors.primary,
+    },
+    radioInner: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: Colors.primary,
+    },
 });

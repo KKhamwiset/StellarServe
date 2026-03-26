@@ -12,7 +12,8 @@ const STATUS_CONFIG: Record<string, { icon: string; color: string; label: string
     pending: { icon: 'time-outline', color: Colors.warning, label: 'Pending' },
     confirmed: { icon: 'checkmark-circle-outline', color: Colors.info, label: 'Confirmed' },
     preparing: { icon: 'flame-outline', color: '#F97316', label: 'Preparing' },
-    delivering: { icon: 'bicycle-outline', color: Colors.info, label: 'On the way' },
+    picked_up: { icon: 'bag-check-outline', color: '#8B5CF6', label: 'Picked Up' },
+    delivering: { icon: 'bicycle-outline', color: Colors.info, label: 'Delivering' },
     delivered: { icon: 'checkmark-done-outline', color: Colors.success, label: 'Delivered' },
     cancelled: { icon: 'close-circle-outline', color: Colors.error, label: 'Cancelled' },
 };
@@ -218,7 +219,35 @@ export default function OrderHistoryScreen() {
                                 </View>
                             ))}
 
-                            {/* Total */}
+                            {/* Rider Info */}
+                            {selectedOrder.rider_name && (
+                                <>
+                                    <View style={styles.modalDivider} />
+                                    <Text style={styles.modalSectionTitle}>Rider Info</Text>
+                                    <View style={styles.modalRow}>
+                                        <Ionicons name="bicycle-outline" size={15} color={Colors.textMuted} />
+                                        <Text style={styles.modalDetail}>{selectedOrder.rider_name}</Text>
+                                    </View>
+                                    {selectedOrder.rider_phone && (
+                                        <View style={styles.modalRow}>
+                                            <Ionicons name="call-outline" size={15} color={Colors.textMuted} />
+                                            <Text style={styles.modalDetail}>{selectedOrder.rider_phone}</Text>
+                                        </View>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Fee Breakdown & Total */}
+                            <View style={styles.modalDivider} />
+                            <View style={[styles.modalTotalRow, { borderTopWidth: 0, paddingVertical: 4 }]}>
+                                <Text style={[styles.modalTotalLabel, { color: Colors.textSecondary, fontWeight: '500' }]}>Subtotal</Text>
+                                <Text style={[styles.modalTotalValue, { fontSize: FontSize.md, color: Colors.text }]}>฿{(selectedOrder.total - (selectedOrder.delivery_fee || 0)).toFixed(2)}</Text>
+                            </View>
+                            <View style={[styles.modalTotalRow, { borderTopWidth: 0, paddingVertical: 4 }]}>
+                                <Text style={[styles.modalTotalLabel, { color: Colors.textSecondary, fontWeight: '500' }]}>Delivery Fee</Text>
+                                <Text style={[styles.modalTotalValue, { fontSize: FontSize.md, color: Colors.text }]}>฿{(selectedOrder.delivery_fee || 0).toFixed(2)}</Text>
+                            </View>
+
                             <View style={styles.modalTotalRow}>
                                 <Text style={styles.modalTotalLabel}>Total</Text>
                                 <Text style={styles.modalTotalValue}>฿{selectedOrder.total.toFixed(2)}</Text>

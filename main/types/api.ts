@@ -3,11 +3,14 @@
  */
 
 export interface User {
-    full_name: string;
+    full_name: string | null;
     email: string;
-    phone: string;
+    phone: string | null;
     role: string;
+    address: string | null;
     image_url: string | null;
+    vehicle_type: string | null;
+    is_available: boolean;
 }
 export interface Token {
     access_token: string;
@@ -48,6 +51,7 @@ export interface CartItem {
     subtotal: number;
     restaurant_id: string;
     image_url: string | null;
+    restaurant: Restaurant;
 }
 
 export interface Cart {
@@ -70,6 +74,7 @@ export interface CreateOrderPayload {
     delivery_address: string;
     phone: string;
     notes?: string;
+    delivery_fee: number;
 }
 
 export interface Order {
@@ -84,10 +89,15 @@ export interface Order {
         subtotal: number;
     }>;
     total: number;
+    delivery_fee: number;
     status: string;
     delivery_address: string;
     phone: string;
     notes: string | null;
+    rider_id: number | null;
+    rider_name: string | null;
+    rider_phone: string | null;
+    customer_name: string | null;
     created_at: string;
 }
 
@@ -130,4 +140,19 @@ export interface Favorite {
     restaurant_id: string;
     restaurant: Restaurant;
     user: User;
+}
+
+export interface Notification {
+    id: number;
+    user_id: number;
+    title: string;
+    message: string;
+    type: string;
+    order_id: string | null;
+    is_read: boolean;
+    created_at: string;
+}
+
+export interface NotificationCount {
+    unread_count: number;
 }

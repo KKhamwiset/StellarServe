@@ -12,6 +12,7 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,16 +20,19 @@ import { Colors } from '@/constants/theme';
 import { getCart, createOrder } from '@/services/api';
 import { Cart } from '@/types/api';
 import { styles } from '@/styles/checkout.styles';
+import { SuccessModal } from '@/components/ui/success-modal';
 
 export default function CheckoutScreen() {
     const { restaurantId } = useLocalSearchParams<{ restaurantId: string }>();
     const [cart, setCart] = useState<Cart | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [successVisible, setSuccessVisible] = useState(false);
 
     const [address, setAddress] = useState('');
     const [phone, setPhone] = useState('');
     const [notes, setNotes] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
 
     useEffect(() => {
         loadData();
@@ -38,6 +42,13 @@ export default function CheckoutScreen() {
         try {
             const data = await getCart();
             setCart(data);
+
+            const userStr = await AsyncStorage.getItem('user');
+            if (userStr) {
+                const userData = JSON.parse(userStr);
+                if (userData.address) setAddress(userData.address);
+                if (userData.phone) setPhone(userData.phone);
+            }
         } catch (error) {
             console.error('Failed to load cart:', error);
             Alert.alert('Error', 'Failed to load checkout details.');
@@ -68,11 +79,10 @@ export default function CheckoutScreen() {
                 })),
                 delivery_address: address,
                 phone: phone,
-                notes: notes || undefined
+                notes: notes || undefined,
+                delivery_fee: 50
             });
-            Alert.alert('Success', 'Your order has been placed!', [
-                { text: 'OK', onPress: () => router.replace('/(tabs)') }
-            ]);
+            setSuccessVisible(true);
         } catch (error) {
             console.error('Checkout failed:', error);
             Alert.alert('Error', 'Failed to place order. Please try again.');
@@ -112,6 +122,12 @@ export default function CheckoutScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color={Colors.text} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Checkout</Text>
+            </View>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -171,6 +187,26 @@ export default function CheckoutScreen() {
                             </View>
 
                             <View style={styles.section}>
+                                <Text style={styles.sectionTitle}>Payment Method</Text>
+
+                                <TouchableOpacity
+                                    style={[styles.paymentOption, paymentMethod === 'cash' && styles.paymentOptionSelected]}
+                                    onPress={() => setPaymentMethod('cash')}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={styles.paymentLeft}>
+                                        <Ionicons name="cash-outline" size={24} color={paymentMethod === 'cash' ? Colors.primary : Colors.textMuted} />
+                                        <Text style={[styles.paymentText, paymentMethod === 'cash' && styles.paymentTextSelected]}>Cash on Delivery</Text>
+                                    </View>
+                                    <View style={[styles.radio, paymentMethod === 'cash' && styles.radioSelected]}>
+                                        {paymentMethod === 'cash' && <View style={styles.radioInner} />}
+                                    </View>
+                                </TouchableOpacity>
+
+
+                            </View>
+
+                            <View style={styles.section}>
                                 <Text style={styles.sectionTitle}>Order Summary</Text>
                                 {itemsToCheckout.map(item => (
                                     <View key={item.id} style={styles.summaryRow}>
@@ -213,6 +249,16 @@ export default function CheckoutScreen() {
                     </View>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
+
+            <SuccessModal
+                visible={successVisible}
+                title="Success"
+                message="Your order has been placed!"
+                onClose={() => {
+                    setSuccessVisible(false);
+                    router.replace('/(tabs)');
+                }}
+            />
         </SafeAreaView>
     );
 }

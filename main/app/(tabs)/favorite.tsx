@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
@@ -6,9 +6,10 @@ import { getFavorites } from '@/services/api';
 import { useState, useEffect } from 'react';
 import { Favorite } from '@/types/api';
 import { StarRating } from '@/components/ui/StarRating';
+import { useRouter } from 'expo-router';
 
 export default function FavoriteScreen() {
-
+    const router = useRouter();
     const [favoriteData, setFavoriteData] = useState<Favorite[]>([]);
 
     useEffect(() => {
@@ -25,7 +26,13 @@ export default function FavoriteScreen() {
                 <Text style={styles.title}>Favorite restaurant</Text>
 
                 {favoriteData.map((item) => (
-                    <View key={item.id} style={styles.card}>
+                    <TouchableOpacity
+                        key={item.id}
+                        style={[styles.card, !item.restaurant.is_open && { opacity: 0.6 }]}
+                        activeOpacity={0.7}
+                        disabled={!item.restaurant.is_open}
+                        onPress={() => router.push(`/restaurant/${item.restaurant.id}`)}
+                    >
                         <View style={styles.cardImage}>
                             {item.restaurant.image_url ? (
                                 <Image source={{ uri: item.restaurant.image_url }} style={styles.fullImage} />
@@ -42,9 +49,9 @@ export default function FavoriteScreen() {
                             <StarRating rating={item.restaurant.rating} />
                         </View>
                         <View style={styles.cardActions}>
-                            <Ionicons name="heart" size={24} color={Colors.primary} />
+                            <Ionicons name="heart" size={24} color={'#FD3A3A'} />
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 ))}
 
                 <View style={{ height: 32 }} />

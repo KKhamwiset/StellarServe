@@ -85,7 +85,7 @@ export default function LoginScreen() {
                                     style={styles.input}
                                     placeholder="johndoe123 or name@example.com"
                                     placeholderTextColor={Colors.textMuted}
-                                    value={identifier}
+                                    value={identifier.trim()}
                                     onChangeText={setIdentifier}
                                     autoCapitalize="none"
                                 />
@@ -100,7 +100,7 @@ export default function LoginScreen() {
                                     style={styles.input}
                                     placeholder="Password"
                                     placeholderTextColor={Colors.textMuted}
-                                    value={password}
+                                    value={password.trim()}
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
                                     maxLength={72}
