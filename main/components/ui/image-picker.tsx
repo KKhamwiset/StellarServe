@@ -15,7 +15,7 @@ export function ImagePicker({ image, onImageSelect, aspect = [4, 3] }: ImagePick
 
     const pickImage = async () => {
         const result = await ExpoImagePicker.launchImageLibraryAsync({
-            mediaTypes: ExpoImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect,
             quality: 1,
@@ -48,7 +48,7 @@ export function ImagePicker({ image, onImageSelect, aspect = [4, 3] }: ImagePick
         try {
             const pickedImage = await pickImage();
             if (!pickedImage || !pickedImage.base64) return;
-            
+
             setUploading(true);
             const url = await uploadToImgBB(pickedImage.base64);
             onImageSelect(url);
@@ -61,7 +61,7 @@ export function ImagePicker({ image, onImageSelect, aspect = [4, 3] }: ImagePick
     };
 
     return (
-        <TouchableOpacity 
+        <TouchableOpacity
             style={styles.imagePicker}
             onPress={handleImage}
             disabled={uploading}

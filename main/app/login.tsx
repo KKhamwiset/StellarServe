@@ -6,10 +6,10 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    TouchableWithoutFeedback,
     Keyboard,
     Image,
 } from 'react-native';
+import { KeyboardDismissView } from '@/components/KeyboardDismissView';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/theme';
@@ -58,7 +58,7 @@ export default function LoginScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardDismissView>
                 <View style={styles.inner}>
                     <View style={styles.header}>
                         <View style={styles.logoContainer}>
@@ -143,7 +143,7 @@ export default function LoginScreen() {
                         </View>
                     </View>
                 </View>
-            </TouchableWithoutFeedback>
+            </KeyboardDismissView>
         </KeyboardAvoidingView>
     );
 }

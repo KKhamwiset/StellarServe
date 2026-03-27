@@ -6,13 +6,13 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    TouchableWithoutFeedback,
     Keyboard,
     ScrollView,
     ActivityIndicator,
     Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { KeyboardDismissView } from '@/components/KeyboardDismissView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -132,7 +132,7 @@ export default function CheckoutScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <KeyboardDismissView>
                     <View style={{ flex: 1 }}>
 
                         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -247,7 +247,7 @@ export default function CheckoutScreen() {
                             </TouchableOpacity>
                         </View>
                     </View>
-                </TouchableWithoutFeedback>
+                </KeyboardDismissView>
             </KeyboardAvoidingView>
 
             <SuccessModal

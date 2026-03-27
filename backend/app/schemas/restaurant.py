@@ -17,6 +17,11 @@ class RestaurantBase(BaseModel):
 class RestaurantCreate(RestaurantBase):
     pass
 
+class RestaurantUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+
 class RestaurantResponse(RestaurantBase):
     id: str
     created_at: datetime

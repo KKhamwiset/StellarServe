@@ -6,11 +6,11 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    TouchableWithoutFeedback,
     Keyboard,
     Image,
     ScrollView,
 } from 'react-native';
+import { KeyboardDismissView } from '@/components/KeyboardDismissView';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -80,7 +80,7 @@ export default function RegisterScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardDismissView>
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                         <Ionicons name="arrow-back" size={24} color={Colors.text} />
@@ -366,7 +366,7 @@ export default function RegisterScreen() {
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
-            </TouchableWithoutFeedback>
+            </KeyboardDismissView>
         </KeyboardAvoidingView>
     );
 }
