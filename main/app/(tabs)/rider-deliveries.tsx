@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/constants/theme';
 import { getRiderOrders, updateRiderOrderStatus } from '@/services/api';
 import { Order } from '@/types/api';
@@ -36,25 +37,39 @@ export default function RiderDeliveriesScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<FilterTab>('active');
+    const isFetchingRef = useRef(false);
 
-    const load = async () => {
+    const load = useCallback(async () => {
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
         try {
             const data = await getRiderOrders();
             setOrders(data);
         } catch (e) {
             console.error('Failed to load rider orders:', e);
         } finally {
+            isFetchingRef.current = false;
             setIsLoading(false);
             setRefreshing(false);
         }
-    };
+    }, []);
 
-    useEffect(() => { load(); }, []);
+    useFocusEffect(
+        useCallback(() => {
+            load();
+
+            const intervalId = setInterval(() => {
+                load();
+            }, 5000);
+
+            return () => clearInterval(intervalId);
+        }, [load])
+    );
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         load();
-    }, []);
+    }, [load]);
 
     const handleStatusUpdate = async (orderId: string, newStatus: string) => {
         setUpdatingId(orderId);
@@ -71,7 +86,7 @@ export default function RiderDeliveriesScreen() {
     const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status.toLowerCase()));
     const completedOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status.toLowerCase()));
     const filteredOrders = activeTab === 'active' ? activeOrders : completedOrders;
-
+    
     /* ─── Loading ──────────────────────────────────────── */
     if (isLoading) {
         return (
@@ -149,6 +164,7 @@ export default function RiderDeliveriesScreen() {
                     {filteredOrders.map((order) => {
                         const sc = getStatusConfig(order.status);
                         const isUpdating = updatingId === order.id;
+                        const canUpdate = order.status.toLowerCase() === 'preparing';
                         return (
                             <View key={order.id} style={styles.card}>
                                 {/* Card header */}
@@ -204,9 +220,9 @@ export default function RiderDeliveriesScreen() {
                                 {/* Action button */}
                                 {sc.nextStatus && (
                                     <TouchableOpacity
-                                        style={[styles.actionButton, isUpdating && styles.actionButtonDisabled]}
+                                        style={[styles.actionButton, (isUpdating || !canUpdate) && styles.actionButtonDisabled]}
                                         onPress={() => handleStatusUpdate(order.id, sc.nextStatus!)}
-                                        disabled={isUpdating}
+                                        disabled={isUpdating || !canUpdate}
                                     >
                                         {isUpdating ? (
                                             <ActivityIndicator size="small" color={Colors.white} />

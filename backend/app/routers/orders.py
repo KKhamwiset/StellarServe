@@ -55,12 +55,6 @@ async def create_order_from_cart(
         )
         new_order_items.append(order_item)
 
-    # Auto-assign an available rider
-    available_rider = db.query(User).filter(
-        User.role == "rider",
-        User.is_active == True,
-        User.is_available == True
-    ).first()
 
     # Compute final total
     total_price = subtotal + order_in.delivery_fee
@@ -76,7 +70,7 @@ async def create_order_from_cart(
         delivery_address=order_in.delivery_address,
         phone=order_in.phone,
         notes=order_in.notes,
-        rider_id=available_rider.id if available_rider else None,
+        rider_id=None,
     )
 
     db.add(new_order)
@@ -103,17 +97,6 @@ async def create_order_from_cart(
             title="New Order Received",
             message=f"You have a new order #{order_id} worth ฿{total_price:.2f}",
             notification_type="new_order",
-            order_id=order_id,
-        )
-
-    # Notify the assigned rider
-    if available_rider:
-        create_notification(
-            db,
-            user_id=available_rider.id,
-            title="New Delivery Assigned",
-            message=f"You have been assigned to deliver order #{order_id} from {restaurant_name}",
-            notification_type="delivery",
             order_id=order_id,
         )
 
@@ -211,7 +194,23 @@ async def update_order_status(
         raise HTTPException(status_code=403, detail="Not authorized to update this order")
         
     order.status = status
-    
+    if status != "cancelled":
+        available_rider = db.query(User).filter(
+            User.role == "rider",
+            User.is_active == True,
+        ).first()
+
+        if available_rider:
+            order.rider_id = available_rider.id
+            create_notification(
+                db,
+                user_id=available_rider.id,
+                title="New Delivery Assigned",
+                message=f"You have been assigned to deliver order #{order.id}",
+                notification_type="new_delivery",
+                order_id=order.id,
+            )
+
     # Notify the consumer
     status_labels = {
         "confirmed": "Confirmed",

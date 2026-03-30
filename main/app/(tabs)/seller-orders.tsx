@@ -18,7 +18,7 @@ const STATUS_CONFIG: Record<string, { icon: string; color: string; label: string
     cancelled: { icon: 'close-circle-outline', color: Colors.error, label: 'Cancelled' },
 };
 
-const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'picked_up', 'delivering', 'delivered'];
+const STATUS_FLOW = ['pending', 'confirmed', 'preparing'];
 
 function getStatusConfig(status: string) {
     return STATUS_CONFIG[status.toLowerCase()] ?? { icon: 'help-outline', color: Colors.textMuted, label: status };
@@ -53,7 +53,7 @@ export default function SellerOrdersScreen() {
 
     useEffect(() => {
         loadOrders();
-    }, [loadOrders]);
+    }, [loadOrders, updatingStatus]);
 
     const handleStatusUpdate = async (orderId: string, newStatus: string) => {
         setUpdatingStatus(true);
