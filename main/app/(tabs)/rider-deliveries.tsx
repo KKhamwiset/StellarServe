@@ -164,7 +164,7 @@ export default function RiderDeliveriesScreen() {
                     {filteredOrders.map((order) => {
                         const sc = getStatusConfig(order.status);
                         const isUpdating = updatingId === order.id;
-                        const canUpdate = order.status.toLowerCase() === 'preparing';
+                        const canUpdate = order.status.toLowerCase() === 'preparing' || order.status.toLowerCase() === 'picked_up' || order.status.toLowerCase() === 'delivering';
                         return (
                             <View key={order.id} style={styles.card}>
                                 {/* Card header */}
